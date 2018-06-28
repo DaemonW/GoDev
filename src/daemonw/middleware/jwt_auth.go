@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/bluele/gcache"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"daemonw/dao"
@@ -11,8 +10,6 @@ import (
 	"daemonw/db"
 	"strconv"
 )
-
-var cache = gcache.New(1024).LRU().Build()
 
 func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {

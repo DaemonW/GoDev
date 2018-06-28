@@ -2,22 +2,20 @@ package dao
 
 import (
 	"daemonw/model"
-	"daemonw/db"
 	"database/sql"
 )
 
 type UserDao struct {
-	*BaseDao
+	*baseDao
 }
 
 func NewUserDao() *UserDao {
-	baseDao := &BaseDao{db.GetDB()}
-	return &UserDao{baseDao}
+	return &UserDao{newBaseDao()}
 }
 
 func (dao *UserDao) Get(id uint64) (*model.User, error) {
 	user := &model.User{}
-	err := dao.db.Get(user, `select * from users where id=$1`, id)
+	err := dao.conn.Get(user, `select * from users where id=$1`, id)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -26,7 +24,7 @@ func (dao *UserDao) Get(id uint64) (*model.User, error) {
 
 func (dao *UserDao) GetByName(username string) (*model.User, error) {
 	user := &model.User{}
-	err := dao.db.Get(user, `select * from users where username=$1`, username)
+	err := dao.conn.Get(user, `select * from users where username=$1`, username)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -35,7 +33,7 @@ func (dao *UserDao) GetByName(username string) (*model.User, error) {
 
 func (dao *UserDao) GetAll() ([]model.User, error) {
 	users := []model.User{}
-	err := dao.db.Select(&users, `select * from users`)
+	err := dao.conn.Select(&users, `select * from users`)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -45,11 +43,11 @@ func (dao *UserDao) GetAll() ([]model.User, error) {
 func (dao *UserDao) CreateUser(user *model.User) error {
 	schema := `insert into users(username,password,salt,login_ip,create_at,update_at) 
 						values (:username,:password,:salt,:login_ip,:create_at,:update_at)`
-	_, err := dao.db.NamedExec(schema, user)
+	_, err := dao.conn.NamedExec(schema, user)
 	return err
 }
 
 func (dao *UserDao) DeleteUser(id int64) error {
-	_, err := dao.db.Exec(`delete from users where id=$1`, id)
+	_, err := dao.conn.Exec(`delete from users where id=$1`, id)
 	return err
 }

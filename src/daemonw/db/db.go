@@ -4,12 +4,16 @@ import (
 	"daemonw/conf"
 	"fmt"
 	"daemonw/log"
+	//orm style tools
 	"github.com/jmoiron/sqlx"
+	// postgresql driver
+	_ "github.com/lib/pq"
+	//_ "github.com/jackc/pgx/stdlib"
 )
 
 const (
-	DB_CONN_WITHOUT_PASSWORD = "postgres://%s@%s:%d/%s?sslmode=%s"
-	DB_CONN_WITH_PASSWORD    = "postgres://%s:%s@%s:%d/%s?sslmode=%s"
+	DialWithoutPass = "postgres://%s@%s:%d/%s?sslmode=%s"
+	DialWithPass    = "postgres://%s:%s@%s:%d/%s?sslmode=%s"
 )
 
 var (
@@ -22,9 +26,9 @@ func init() {
 	//connStr := "postgres://postgres:a123456@localhost:5432/mydb?sslmode=disable"
 	var connParams string
 	if c.Password == "" {
-		connParams = fmt.Sprintf(DB_CONN_WITHOUT_PASSWORD, c.User, c.Host, c.Port, c.Name, c.SSLMode)
+		connParams = fmt.Sprintf(DialWithoutPass, c.User, c.Host, c.Port, c.Name, c.SSLMode)
 	} else {
-		connParams = fmt.Sprintf(DB_CONN_WITH_PASSWORD, c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
+		connParams = fmt.Sprintf(DialWithPass, c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
 	}
 	db, err = sqlx.Connect("postgres", connParams)
 	if err != nil {

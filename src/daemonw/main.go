@@ -27,7 +27,7 @@ func startServer(router *gin.Engine, port int) {
 	certManager := autocert.Manager{
 		Cache:      autocert.DirCache(conf.BinDir + string(filepath.Separator) + ".certs"),
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("daemonw.cn"),
+		HostPolicy: autocert.HostWhitelist(conf.Config.Domain),
 	}
 	var err error
 	var tlsConf *tls.Config
