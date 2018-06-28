@@ -1,0 +1,11 @@
+*~
+.idea
+.git
+/pkg
+/bin
+GoDev
+/certs
+/log
+/data
+/cache
+/autocerts

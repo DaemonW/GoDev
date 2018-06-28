@@ -1,0 +1,83 @@
+## this is a toml config file for server
+
+## encode style of http request header 
+enc = "utf8"
+
+### enable https transformation
+tls = true
+
+###use let's encrypt to generate cert automaticlly
+use_auto_cert = false
+
+### ssl public certificate
+tls_cert = "./certs/server.pem"
+
+### ssl private key
+tls_key = "./certs/server.key"
+
+### domain name of the service endpoint
+domain = "example.com"
+
+### listen port of the service
+port = 8080
+
+### dir to storage files
+data = "./data"
+
+### dir to storage log files
+log_dir = "./log"
+
+### database config
+[database]
+
+### database port
+port = 5432
+
+### database host
+host = "127.0.0.1"
+
+### database owner
+user = "postgres"
+
+### database name
+
+name = "go_dev"
+
+### the password to connect database
+
+password = "a123456"
+
+### ssl-mode to connect
+
+ssl_mode = "disable"
+
+### cache config, default use  redis cache
+[redis]
+
+### port
+port = 6379
+
+### host
+host = "127.0.0.1"
+
+### password
+
+password = ""
+
+### db num
+
+num=0
+
+### max client connection
+max_conn = 3
+
+### enterprise email account
+[smtp_server]
+
+account = "example@163.com"
+
+password = "a12345678"
+
+host = "smtp.163.com" ##163 smtp server host
+
+port = 25  ## default 163 port
