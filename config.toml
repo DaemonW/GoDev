@@ -4,7 +4,7 @@
 enc = "utf8"
 
 ### enable https transformation
-tls = true
+tls = false
 
 ###use let's encrypt to generate cert automaticlly
 use_auto_cert = false

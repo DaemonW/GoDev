@@ -9,13 +9,15 @@ import (
 	"daemonw/model"
 	"daemonw/db"
 	"strconv"
+	"errors"
+	"daemonw/log"
 )
 
 func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				c.JSON(http.StatusUnauthorized, model.NewResp().SetError(model.ErrInternalServer))
+				c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
 				c.Abort()
 			}
 		}()
@@ -32,7 +34,9 @@ func JwtAuth() gin.HandlerFunc {
 			return
 		}
 		params := token.Claims.(jwt.MapClaims)
-		c.Set("uid", params["uid"])
+		uidStr := params["uid"].(string)
+		uid, _ := strconv.ParseUint(uidStr, 10, 64)
+		c.Set("uid", uid)
 		c.Set("user", params["user"])
 		c.Next()
 	}
@@ -42,22 +46,27 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 	var pass string
 	//check token
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		uid := token.Claims.(jwt.MapClaims)["uid"].(uint64)
+		uidStr := token.Claims.(jwt.MapClaims)["uid"]
 		//get cached pass
-		result := db.GetRedis().Get("token_secret:" + strconv.FormatUint(uid, 10))
+		result,err := db.GetRedis().Get("token_secret:" + uidStr.(string)).Result()
 		//if cached, verified
-		if result.Err() == nil {
-			pass = result.String()
+		if err == nil {
+			pass = result
 		}
 		if pass != "" {
-			return pass, nil
+			log.Info().Msgf("password = %s", pass)
+			return []byte(pass), nil
 		}
+		uid, _ := strconv.ParseUint(uidStr.(string), 10, 64)
 		user, err := dao.NewUserDao().Get(uid)
 		if err != nil {
 			//internal error
 			panic(err)
 		}
-		return user.Password, nil
+		if user == nil {
+			return nil, errors.New("invalid token")
+		}
+		return []byte(user.Password), nil
 	})
 	return token, err
 }

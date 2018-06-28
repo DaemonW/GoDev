@@ -84,6 +84,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		c.Writer.Header().Set("auth", token)
+		log.Info().Msgf("password = %s",u.Password)
 		db.GetRedis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			model.NewResp().
@@ -96,7 +97,7 @@ func Login(c *gin.Context) {
 
 func genJwtToken(user *model.User, ip string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid":    user.ID,
+		"uid":    strconv.FormatUint(user.ID,10),
 		"user":   user.Username,
 		"create": user.CreateAt,
 		"ip":     ip,

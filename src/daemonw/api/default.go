@@ -5,6 +5,7 @@ import (
 	"daemonw/middleware"
 	"github.com/gin-gonic/gin"
 	"daemonw/conf"
+	"time"
 )
 
 var router *gin.Engine
@@ -13,7 +14,6 @@ func init() {
 
 	gin.SetMode(gin.ReleaseMode)
 	router = gin.Default()
-	router.Use(middleware.ApiCounter)
 
 	//init routers
 	initUserRouter()
@@ -32,12 +32,13 @@ func initPageRouter() {
 }
 
 func initUserRouter() {
-	lp := middleware.NewLimiterPool()
 	router.GET("/users/:userId", controller.GetUser)
 	router.POST("/users", controller.CreateUser)
 	router.POST("/login", controller.Login)
-	router.GET("/users", middleware.IpLimiter(lp, 1, 2), controller.GetAllUsers)
+	router.GET("/users", controller.GetAllUsers)
 	authRouter := router.Group("api")
 	authRouter.Use(middleware.JwtAuth())
+	authRouter.Use(middleware.UserRateLimiter(2))
+	authRouter.Use(middleware.UserCountLimiter(20, time.Second*10))
 	authRouter.GET("/verify", controller.GetVerifyCode)
 }
