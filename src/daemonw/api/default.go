@@ -32,7 +32,7 @@ func initPageRouter() {
 }
 
 func initUserRouter() {
-	router.GET("/users/:userId", controller.GetUser)
+	router.GET("/users/:user_id", controller.GetUser)
 	router.POST("/users", controller.CreateUser)
 	router.POST("/login", controller.Login)
 	router.GET("/users", controller.GetAllUsers)

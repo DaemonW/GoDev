@@ -5,15 +5,15 @@ import (
 	"database/sql"
 )
 
-type UserDao struct {
+type userDao struct {
 	*baseDao
 }
 
-func NewUserDao() *UserDao {
-	return &UserDao{newBaseDao()}
+func newUserDao() *userDao {
+	return &userDao{newBaseDao()}
 }
 
-func (dao *UserDao) Get(id uint64) (*model.User, error) {
+func (dao *userDao) Get(id uint64) (*model.User, error) {
 	user := &model.User{}
 	err := dao.conn.Get(user, `select * from users where id=$1`, id)
 	if err == sql.ErrNoRows {
@@ -22,7 +22,7 @@ func (dao *UserDao) Get(id uint64) (*model.User, error) {
 	return user, err
 }
 
-func (dao *UserDao) GetByName(username string) (*model.User, error) {
+func (dao *userDao) GetByName(username string) (*model.User, error) {
 	user := &model.User{}
 	err := dao.conn.Get(user, `select * from users where username=$1`, username)
 	if err == sql.ErrNoRows {
@@ -31,7 +31,7 @@ func (dao *UserDao) GetByName(username string) (*model.User, error) {
 	return user, err
 }
 
-func (dao *UserDao) GetAll() ([]model.User, error) {
+func (dao *userDao) GetAll() ([]model.User, error) {
 	users := []model.User{}
 	err := dao.conn.Select(&users, `select * from users`)
 	if err == sql.ErrNoRows {
@@ -40,14 +40,14 @@ func (dao *UserDao) GetAll() ([]model.User, error) {
 	return users, err
 }
 
-func (dao *UserDao) CreateUser(user *model.User) error {
+func (dao *userDao) CreateUser(user *model.User) error {
 	schema := `insert into users(username,password,salt,login_ip,create_at,update_at) 
 						values (:username,:password,:salt,:login_ip,:create_at,:update_at)`
 	_, err := dao.conn.NamedExec(schema, user)
 	return err
 }
 
-func (dao *UserDao) DeleteUser(id int64) error {
+func (dao *userDao) DeleteUser(id int64) error {
 	_, err := dao.conn.Exec(`delete from users where id=$1`, id)
 	return err
 }

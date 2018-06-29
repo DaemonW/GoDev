@@ -18,22 +18,22 @@ import (
 )
 
 func GetUser(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("userId"), 10, 64)
-	user, err := dao.NewUserDao().Get(id)
+	id, _ := strconv.ParseUint(c.Param("user_id"), 10, 64)
+	user, err := dao.UserDao.Get(id)
 	if err != nil {
 		log.Error().Err(err).Msg("db error")
 		c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
 		return
 	}
 	if user == nil {
-		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg("no such user"))
+		c.JSON(http.StatusBadRequest, model.NewResp().SetError(model.ErrUserNotExist))
 		return
 	}
 	c.JSON(http.StatusOK, model.NewResp().AddResult("user", user))
 }
 
 func GetAllUsers(c *gin.Context) {
-	users, err := dao.NewUserDao().GetAll()
+	users, err := dao.UserDao.GetAll()
 	util.PanicIfErr(err)
 	c.JSON(http.StatusOK, model.NewResp().AddResult("users", users))
 }
@@ -46,7 +46,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	user.SetPassword(user.Password, nil)
-	if err = dao.NewUserDao().CreateUser(&user); err != nil {
+	if err = dao.UserDao.CreateUser(&user); err != nil {
 		resp := model.NewResp().SetError(model.ErrCreateUser)
 		c.JSON(http.StatusBadRequest, resp)
 	} else {
@@ -65,7 +65,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	u, err := dao.NewUserDao().GetByName(user.Username)
+	u, err := dao.UserDao.GetByName(user.Username)
 	util.PanicIfErr(err)
 	if u == nil {
 		c.JSON(http.StatusBadRequest, model.NewResp().SetError(model.ErrUserNotExist))
@@ -84,7 +84,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		c.Writer.Header().Set("auth", token)
-		log.Info().Msgf("password = %s",u.Password)
+		log.Info().Msgf("password = %s", u.Password)
 		db.GetRedis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			model.NewResp().
@@ -97,7 +97,7 @@ func Login(c *gin.Context) {
 
 func genJwtToken(user *model.User, ip string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid":    strconv.FormatUint(user.ID,10),
+		"uid":    strconv.FormatUint(user.ID, 10),
 		"user":   user.Username,
 		"create": user.CreateAt,
 		"ip":     ip,

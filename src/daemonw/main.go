@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"daemonw/api"
 	"os"
@@ -15,41 +14,40 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 	"crypto/tls"
 	"daemonw/db"
+	"syscall"
 )
 
 func main() {
-	router := api.GetRouter()
-	//router.RunTLS(":"+port, cert, key)
-	startServer(router, conf.Config.Port)
-}
-
-func startServer(router *gin.Engine, port int) {
-	certManager := autocert.Manager{
-		Cache:      autocert.DirCache(conf.BinDir + string(filepath.Separator) + ".certs"),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(conf.Config.Domain),
-	}
+	defer closeDBConn()
 	var err error
+	cfg := conf.Config
+	router := api.GetRouter()
 	var tlsConf *tls.Config
-	if conf.Config.TLS && conf.Config.UseAutoCert {
+	//let's encrypt auto cert
+	if cfg.TLS && cfg.UseAutoCert {
+		certManager := autocert.Manager{
+			Cache:      autocert.DirCache(conf.BinDir + string(filepath.Separator) + ".certs"),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(cfg.Domain),
+		}
 		tlsConf = &tls.Config{GetCertificate: certManager.GetCertificate}
 	}
+	//tls config
 	srv := &http.Server{
-		Addr:      ":" + strconv.Itoa(port),
+		Addr:      ":" + strconv.Itoa(cfg.Port),
 		Handler:   router,
 		TLSConfig: tlsConf,
 	}
-	defer closeDBConn()
 	go func() {
-		if !conf.Config.TLS {
-			log.Info().Msgf("start http server on %d", port)
+		if !cfg.TLS {
+			log.Info().Msgf("start http server on %d", cfg.Port)
 			err = srv.ListenAndServe()
 		} else {
-			log.Info().Msgf("start https server on %d", port)
-			if conf.Config.UseAutoCert {
+			log.Info().Msgf("start https server on %d", cfg.Port)
+			if cfg.UseAutoCert {
 				err = srv.ListenAndServeTLS("", "")
 			} else {
-				err = srv.ListenAndServeTLS(conf.Config.TLSCert, conf.Config.TLSKey)
+				err = srv.ListenAndServeTLS(cfg.TLSCert, cfg.TLSKey)
 			}
 		}
 		if err != nil {
@@ -60,18 +58,21 @@ func startServer(router *gin.Engine, port int) {
 		}
 	}()
 
+	listenShutdownSignal(srv)
+}
+
+func listenShutdownSignal(srv *http.Server) {
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
 	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
 	<-quit
-
+	log.Info().Msg("shutdown server")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal().Err(err).Msg("error occurred when try to shutdown server")
+		log.Error().Err(err).Msg("shutdown server error")
 	}
-	log.Info().Msg("shutdown server")
 }
 
 func closeDBConn() {

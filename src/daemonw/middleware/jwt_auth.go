@@ -48,7 +48,7 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		uidStr := token.Claims.(jwt.MapClaims)["uid"]
 		//get cached pass
-		result,err := db.GetRedis().Get("token_secret:" + uidStr.(string)).Result()
+		result, err := db.GetRedis().Get("token_secret:" + uidStr.(string)).Result()
 		//if cached, verified
 		if err == nil {
 			pass = result
@@ -58,7 +58,7 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 			return []byte(pass), nil
 		}
 		uid, _ := strconv.ParseUint(uidStr.(string), 10, 64)
-		user, err := dao.NewUserDao().Get(uid)
+		user, err := dao.UserDao.Get(uid)
 		if err != nil {
 			//internal error
 			panic(err)
