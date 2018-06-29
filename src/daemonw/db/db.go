@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	// postgresql driver
 	_ "github.com/lib/pq"
-	//_ "github.com/jackc/pgx/stdlib"
 )
 
 const (

@@ -3,7 +3,9 @@
 .git
 /pkg
 /bin
-GoDev
+/src/*/vendor
+*release
+*debug
 /certs
 /log
 /data

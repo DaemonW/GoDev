@@ -50,7 +50,7 @@ func (m *MailMessage) SetMessageInfo(info *MailInfo) {
 }
 
 func (m *MailMessage) SetAuth(auth MailAuth) {
-	m.Dialer = gomail.NewDialer(auth.SMTPAddr, auth.Port, auth.Username, auth.Password)
+	m.Dialer = gomail.NewPlainDialer(auth.SMTPAddr, auth.Port, auth.Username, auth.Password)
 }
 
 func (m *MailMessage) SetSender(sender string) {
