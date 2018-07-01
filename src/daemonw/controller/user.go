@@ -84,7 +84,6 @@ func Login(c *gin.Context) {
 			return
 		}
 		c.Writer.Header().Set("auth", token)
-		log.Info().Msgf("password = %s", u.Password)
 		db.GetRedis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			model.NewResp().

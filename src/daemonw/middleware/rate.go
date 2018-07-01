@@ -10,20 +10,20 @@ import (
 
 const redisPrefix = "rate"
 
-type redisRater interface {
+type redisPiper interface {
 	Del(...string) *redis.IntCmd
 	Pipelined(func(pipe redis.Pipeliner) error) ([]redis.Cmder, error)
 }
 
 // Limiter controls how frequently events are allowed to happen.
 type Limiter struct {
-	redis redisRater
+	redis redisPiper
 
 	// Optional fallback limiter used when Redis is unavailable.
 	Fallback *rate.Limiter
 }
 
-func NewLimiter(redis redisRater) *Limiter {
+func NewLimiter(redis redisPiper) *Limiter {
 	return &Limiter{
 		redis: redis,
 	}
@@ -139,7 +139,8 @@ func (l *Limiter) incr(name string, dur time.Duration, n int64) (int64, error) {
 	_, err := l.redis.Pipelined(func(pipe redis.Pipeliner) error {
 		incr = pipe.IncrBy(name, n)
 		pipe.Expire(name, dur)
-		return nil
+		_, e := pipe.Exec()
+		return e
 	})
 
 	rate, _ := incr.Result()

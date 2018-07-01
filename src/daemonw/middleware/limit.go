@@ -8,13 +8,21 @@ import (
 	"net/http"
 	"daemonw/model"
 	"daemonw/log"
+	"daemonw/conf"
 )
 
 func UserRateLimiter(limit int64) gin.HandlerFunc {
 	limiter := NewLimiter(db.GetRing())
 	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error().Err(err.(error)).Msg("rate limit")
+				c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
+				c.Abort()
+			}
+		}()
 		uid := c.MustGet("uid").(uint64)
-		key := "user_access:" + strconv.FormatUint(uid, 10)
+		key := conf.AccessRateLimitKey + strconv.FormatUint(uid, 10)
 		rate, delay, allow := limiter.Allow(key, limit, time.Second)
 		if !allow {
 			header := c.Writer.Header()
@@ -31,13 +39,20 @@ func UserRateLimiter(limit int64) gin.HandlerFunc {
 }
 
 func UserCountLimiter(limit int64, dur time.Duration) gin.HandlerFunc {
-	limiter := NewCounter(db.GetRedis(), 100, time.Now().Add(dur))
+	limiter := NewCounter(db.GetRedis())
 	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error().Err(err.(error)).Msg("count limit")
+				c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
+				c.Abort()
+			}
+		}()
 		uid := c.MustGet("uid").(uint64)
 		username := c.MustGet("user").(string)
-		key := "user_access:" + strconv.FormatUint(uid, 10)
-		count, allow := limiter.Allow(key, time.Now())
-		log.Info().Str("user", username).Msgf("access count = %d", count)
+		key := conf.AccessCountLimitKey + strconv.FormatUint(uid, 10)
+		count, allow := limiter.Allow(key)
+		log.Debug().Msgf("user=%s, access_num=%d",username,count)
 		if !allow {
 			header := c.Writer.Header()
 			header.Set("X-CountLimit-Limit", strconv.FormatInt(limit, 10))

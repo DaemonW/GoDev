@@ -19,6 +19,7 @@ var (
 
 func init() {
 	zerolog.TimeFieldFormat = ""
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	var writer io.Writer
 	t := time.Now()
 	writer = zerolog.ConsoleWriter{Out: os.Stderr}

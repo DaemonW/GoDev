@@ -11,20 +11,24 @@ import (
 var router *gin.Engine
 
 func init() {
-
 	gin.SetMode(gin.ReleaseMode)
-	router = gin.Default()
-
+	router = newEngine()
 	//init routers
 	initUserRouter()
-	initPageRouter()
+	initStaticRouter()
+}
+
+func newEngine() *gin.Engine {
+	engine := gin.New()
+	engine.Use(middleware.Logger(), gin.Recovery())
+	return engine
 }
 
 func GetRouter() *gin.Engine {
 	return router
 }
 
-func initPageRouter() {
+func initStaticRouter() {
 	binDir := conf.BinDir
 	router.StaticFile("/", binDir+"/static/html/index.html")
 	router.Static("/static/", binDir+"/static")
@@ -36,9 +40,13 @@ func initUserRouter() {
 	router.POST("/users", controller.CreateUser)
 	router.POST("/login", controller.Login)
 	router.GET("/users", controller.GetAllUsers)
-	authRouter := router.Group("api")
+
+	authRouter := router.Group("")
 	authRouter.Use(middleware.JwtAuth())
-	authRouter.Use(middleware.UserRateLimiter(2))
-	authRouter.Use(middleware.UserCountLimiter(20, time.Second*10))
-	authRouter.GET("/verify", controller.GetVerifyCode)
+	authRouter.GET("/setting/limit", controller.LimitUserAccessCount)
+
+	limitRouter := authRouter.Group("")
+	limitRouter.Use(middleware.UserRateLimiter(2))
+	limitRouter.Use(middleware.UserCountLimiter(20, time.Second*10))
+	limitRouter.GET("/verify", controller.GetVerifyCode)
 }

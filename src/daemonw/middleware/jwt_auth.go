@@ -17,6 +17,7 @@ func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
+				log.Error().Err(err.(error)).Msg("verify token")
 				c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
 				c.Abort()
 			}
@@ -54,7 +55,6 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 			pass = result
 		}
 		if pass != "" {
-			log.Info().Msgf("password = %s", pass)
 			return []byte(pass), nil
 		}
 		uid, _ := strconv.ParseUint(uidStr.(string), 10, 64)
