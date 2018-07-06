@@ -6,7 +6,7 @@ import (
 	"daemonw/db"
 )
 
-type DaoConn interface {
+type daoConn interface {
 	Get(dest interface{}, query string, args ...interface{}) error
 	Select(dest interface{}, query string, args ...interface{}) error
 	NamedExec(query string, arg interface{}) (sql.Result, error)
@@ -16,7 +16,7 @@ type baseDao struct {
 	db       *sqlx.DB
 	enableTx bool
 	tx       *sqlx.Tx
-	conn     DaoConn
+	conn     daoConn
 }
 
 func newBaseDao() *baseDao {

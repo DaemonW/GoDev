@@ -4,9 +4,9 @@ import (
 	"time"
 	"sync"
 	"github.com/go-redis/redis"
-	"github.com/pkg/errors"
 	"strconv"
 	"daemonw/log"
+	"errors"
 )
 
 var (

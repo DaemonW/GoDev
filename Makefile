@@ -6,37 +6,30 @@ PROJECT_NAME=daemonw
 
 ##当前工作目录作为GOPATH
 GOPATH=$(shell pwd)
-##系统设置的GOPATH
-SYS_GOPATH=$(shell echo $$GOPATH)
 
 #Go命令
-GO=$(GOROOT)/bin/go
-GODEP=$(SYS_GOPATH)/bin/dep
+GO=go
+GODEP=dep
 GOBUILD=$(GO) build
 GOCLEAN=$(GO) clean
 GOTEST=$(GO) test
 GOGET=$(GO) get
 
-
+## 0/1
+CGO_ENABLED=0
+## linux/windows
+GOOS=linux
+## amd64/in3686
+GOARCH=in386
 
 ##自定义参数
 ##可执行文件名
-BINARY_NAME=
+BINARY_NAME=test
 
-##源码路径,需要包括main包
+##源码路径
 WORK_DIR=./src/$(PROJECT_NAME)
 
-
-
-
-# build and test
-all: build test
-
-checkenv:
-ifneq ("$(BINARY_NAME)","")
-	echo $(BINARY_NAME)
-	BINARY_NAME+=_
-endif
+main:build
 
 #init a empty project structure
 init:
@@ -44,14 +37,14 @@ init:
 	mkdir $(WORK_DIR)
 	touch $(WORK_DIR)/main.go
 #default linux
-build:checkenv
+build:
 ifeq ("release", "$(type)")
-	##release版去除调试信息
-	$(GOBUILD) -ldflags "-s -w" -o $(BINARY_NAME)release -v -tags=jsoniter $(WORK_DIR)/.
-	##使用upx压缩可执行文件,减小size,效果很不错
-	upx $(BINARY_NAME)release
+##release版去除调试信息
+	source ./setenv.sh $(arch) && $(GOBUILD) -ldflags "-s -w" -o $(BINARY_NAME) -v -tags=jsoniter $(WORK_DIR)/.
+##使用upx压缩可执行文件,减小size,效果很不错
+	upx $(BINARY_NAME)
 else
-	$(GOBUILD) -o $(BINARY_NAME)debug -v -tags=jsoniter $(WORK_DIR)/.
+	source ./setenv.sh $(arch) && $(GOBUILD) -o $(BINARY_NAME) -v -tags=jsoniter $(WORK_DIR)/.
 endif
 
 test:
@@ -63,20 +56,12 @@ clean:
 	rm -f $(BINARY_NAME)
 
 run: build
-ifeq ("release", "$(type)")
-	./$(BINARY_NAME)release
-else
-	./$(BINARY_NAME)debug
-endif
+	./$(BINARY_NAME)
 depinstall:
 	cd $(WORK_DIR) && $(GODEP) ensure
 depupdate:
 	cd $(WORK_DIR) && $(GODEP) ensure -update
 depinit:
-	export GOPATH=$(SYS_GOPATH)
+##初始化依赖时设置为系统默认GOPATH
+	@export GOPATH=$(shell echo $$GOPATH)
 	cd $(WORK_DIR) && $(GODEP) init -gopath=true
-
-# Cross compilation
-build-linux:checkenv
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-	$(GOBUILD) -o $(BINARY_NAME) -v -tags=jsoniter $(WORK_DIR)/.

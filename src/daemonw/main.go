@@ -65,7 +65,7 @@ func listenShutdownSignal(srv *http.Server) {
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
 	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-quit
 	log.Info().Msg("shutdown server")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -34,11 +34,10 @@ func JwtAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		params := token.Claims.(jwt.MapClaims)
-		uidStr := params["uid"].(string)
-		uid, _ := strconv.ParseUint(uidStr, 10, 64)
+		params := token.Claims.(model.Claims)
+		uid, _ := strconv.ParseUint(params.Id, 10, 64)
 		c.Set("uid", uid)
-		c.Set("user", params["user"])
+		c.Set("user", params.Audience)
 		c.Next()
 	}
 }

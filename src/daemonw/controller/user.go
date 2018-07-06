@@ -95,11 +95,16 @@ func Login(c *gin.Context) {
 }
 
 func genJwtToken(user *model.User, ip string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid":    strconv.FormatUint(user.ID, 10),
-		"user":   user.Username,
-		"create": user.CreateAt,
-		"ip":     ip,
-	})
+	claims := model.Claims{
+		Ip: ip,
+		StandardClaims: jwt.StandardClaims{
+			Id:        strconv.FormatUint(user.ID, 10),
+			Issuer:    "server",
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 14).Unix(),
+			Audience:  user.Username,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(user.Password))
 }
