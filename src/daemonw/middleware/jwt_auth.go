@@ -34,7 +34,7 @@ func JwtAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		params := token.Claims.(model.Claims)
+		params := token.Claims.(*model.Claims)
 		uid, _ := strconv.ParseUint(params.Id, 10, 64)
 		c.Set("uid", uid)
 		c.Set("user", params.Audience)
@@ -44,11 +44,15 @@ func JwtAuth() gin.HandlerFunc {
 
 func verifyToken(tokenStr string) (*jwt.Token, error) {
 	var pass string
+	var claims model.Claims
 	//check token
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		uidStr := token.Claims.(jwt.MapClaims)["uid"]
+	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
+		claims, ok := token.Claims.(*model.Claims)
+		if !ok {
+			return nil, errors.New("invalid token format")
+		}
 		//get cached pass
-		result, err := db.GetRedis().Get("token_secret:" + uidStr.(string)).Result()
+		result, err := db.GetRedis().Get("token_secret:" + claims.Id).Result()
 		//if cached, verified
 		if err == nil {
 			pass = result
@@ -56,7 +60,7 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 		if pass != "" {
 			return []byte(pass), nil
 		}
-		uid, _ := strconv.ParseUint(uidStr.(string), 10, 64)
+		uid, _ := strconv.ParseUint(claims.Id, 10, 64)
 		user, err := dao.UserDao.Get(uid)
 		if err != nil {
 			//internal error

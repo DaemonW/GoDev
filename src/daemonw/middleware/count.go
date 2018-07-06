@@ -67,14 +67,14 @@ func (c *memoryCounter) Delete(key string) {
 }
 
 type Counter struct {
-	redis redisPiper
+	redis *redis.Client
 	limit int64
 	count int64
 	begin time.Time
 	end   time.Time
 }
 
-func NewCounter(piper redisPiper) *Counter {
+func NewCounter(piper *redis.Client) *Counter {
 	c := &Counter{redis: piper}
 	return c
 }
@@ -109,9 +109,13 @@ func (c *Counter) SetLimit(key string, limit int64, begin, end time.Time) {
 }
 
 func (c *Counter) Allow(key string) (n int64, allow bool) {
+	num, err := c.redis.Exists(key).Result()
+	if num <= 0 {
+		return 0, true
+	}
 	var varsCmd *redis.SliceCmd
 	var countCmd *redis.IntCmd
-	_, err := c.redis.Pipelined(func(pipe redis.Pipeliner) error {
+	_, err = c.redis.Pipelined(func(pipe redis.Pipeliner) error {
 		varsCmd = pipe.HMGet(key, "begin", "end", "limit", "count")
 		countCmd = pipe.HIncrBy(key, "count", 1)
 		_, e := pipe.Exec()

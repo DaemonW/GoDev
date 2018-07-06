@@ -12,7 +12,7 @@ import (
 )
 
 func UserRateLimiter(limit int64) gin.HandlerFunc {
-	limiter := NewLimiter(db.GetRing())
+	limiter := NewLimiter(db.GetRedis())
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -52,7 +52,7 @@ func UserCountLimiter(limit int64, dur time.Duration) gin.HandlerFunc {
 		username := c.MustGet("user").(string)
 		key := conf.AccessCountLimitKey + strconv.FormatUint(uid, 10)
 		count, allow := limiter.Allow(key)
-		log.Debug().Msgf("user=%s, access_num=%d",username,count)
+		log.Debug().Msgf("user=%s, access_num=%d", username, count)
 		if !allow {
 			header := c.Writer.Header()
 			header.Set("X-CountLimit-Limit", strconv.FormatInt(limit, 10))

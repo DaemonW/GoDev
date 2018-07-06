@@ -15,6 +15,7 @@ import (
 	"daemonw/log"
 	"daemonw/db"
 	"time"
+	"github.com/asaskevich/govalidator"
 )
 
 func GetUser(c *gin.Context) {
@@ -40,13 +41,21 @@ func GetAllUsers(c *gin.Context) {
 
 func CreateUser(c *gin.Context) {
 	var err error
-	var user model.User
-	if err = c.ShouldBindWith(&user, binding.FormPost); err != nil {
+	var registerUser struct {
+		Username string `json:"username" form:"username" valid:"alphanum,length(8|16)"`
+		Password string `json:"password" form:"password" valid:"printableascii,length(8|16)"`
+	}
+	if err = c.ShouldBindWith(&registerUser, binding.JSON); err != nil {
 		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg(err.Error()))
 		return
 	}
-	user.SetPassword(user.Password, nil)
-	if err = dao.UserDao.CreateUser(&user); err != nil {
+	_, err = govalidator.ValidateStruct(registerUser)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg("bad format"))
+		return
+	}
+	user := model.NewUser(registerUser.Username, registerUser.Password)
+	if err = dao.UserDao.CreateUser(user); err != nil {
 		resp := model.NewResp().SetError(model.ErrCreateUser)
 		c.JSON(http.StatusBadRequest, resp)
 	} else {
@@ -56,23 +65,23 @@ func CreateUser(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	var user struct {
+	var loginUser struct {
 		Username string `json:"username" form:"username"`
 		Password string `json:"password" form:"password"`
 	}
-	if err := c.ShouldBindWith(&user, binding.FormPost); err != nil {
+	if err := c.ShouldBindWith(&loginUser, binding.FormPost); err != nil {
 		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg(err.Error()))
 		return
 	}
 
-	u, err := dao.UserDao.GetByName(user.Username)
+	u, err := dao.UserDao.GetByName(loginUser.Username)
 	util.PanicIfErr(err)
 	if u == nil {
 		c.JSON(http.StatusBadRequest, model.NewResp().SetError(model.ErrUserNotExist))
 		return
 	}
 
-	b := append([]byte(user.Password), u.Salt...)
+	b := append([]byte(loginUser.Password), u.Salt...)
 	encPass := fmt.Sprintf("%x", md5.Sum(b))
 	if encPass == u.Password {
 		ip := util.GetRequestIP(c.Request, false)
@@ -88,7 +97,8 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusOK,
 			model.NewResp().
 				AddResult("msg", "login success, ip address = "+ip).
-				AddResult("user", u))
+				AddResult("user", u).
+				AddResult("token", token))
 	} else {
 		c.JSON(http.StatusUnauthorized, model.NewResp().SetError(model.ErrInvalidAuth))
 	}

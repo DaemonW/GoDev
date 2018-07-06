@@ -65,6 +65,10 @@
   name = "gopkg.in/gomail.v2"
   version = "2.0.0"
 
+[[constraint]]
+  name = "github.com/asaskevich/govalidator"
+  branch = "master"
+
 [prune]
   go-tests = true
   unused-packages = true
