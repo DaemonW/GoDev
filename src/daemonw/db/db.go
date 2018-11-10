@@ -3,7 +3,8 @@ package db
 import (
 	"daemonw/conf"
 	"fmt"
-	"daemonw/log"
+	"log"
+
 	//orm style tools
 	"github.com/jmoiron/sqlx"
 	// postgresql driver
@@ -19,7 +20,7 @@ var (
 	db *sqlx.DB
 )
 
-func init() {
+func InitDB() error {
 	var err error
 	c := &conf.Config.Database
 	//connStr := "postgres://postgres:a123456@localhost:5432/mydb?sslmode=disable"
@@ -31,17 +32,19 @@ func init() {
 	}
 	db, err = sqlx.Connect("postgres", connParams)
 	if err != nil {
-		log.Fatal().Err(err).Msg("connect to database failed")
+		return err
 	}
 
 	//create table which not exist
 	err = initTables()
-	fatalIfErr(err)
+	return err
 }
 
 func initTables() error {
 	tx, err := db.Beginx()
-	fatalIfErr(err)
+	if err != nil {
+		return err
+	}
 	defer tx.Rollback()
 
 	//init user table
@@ -62,12 +65,8 @@ func GetDB() *sqlx.DB {
 func existTable(name string) bool {
 	rowNum := 0
 	err := db.Get(&rowNum, `select count(*) from pg_class where relname = $1;`, name)
-	fatalIfErr(err)
-	return rowNum > 0
-}
-
-func fatalIfErr(err error) {
 	if err != nil {
-		log.Fatal().Msg(err.Error())
+		log.Fatal(err)
 	}
+	return rowNum > 0
 }

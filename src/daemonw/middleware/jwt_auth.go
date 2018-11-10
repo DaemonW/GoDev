@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -8,8 +9,8 @@ import (
 	"daemonw/dao"
 	"daemonw/model"
 	"daemonw/db"
+	myerr "daemonw/errors"
 	"strconv"
-	"errors"
 	"daemonw/log"
 )
 
@@ -18,7 +19,7 @@ func JwtAuth() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Error().Err(err.(error)).Msg("verify token")
-				c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
+				c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 				c.Abort()
 			}
 		}()

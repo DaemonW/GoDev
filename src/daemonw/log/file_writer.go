@@ -1,21 +1,16 @@
 package log
 
 import (
-	"time"
-	"os"
-	"log"
-	"path/filepath"
-	"daemonw/conf"
 	"bufio"
+	"log"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 const (
 	defaultFileName   = "current.log"
 	defaultLogMaxSize = 2 * 1024 * 1024
-)
-
-var (
-	defaultFileWriter = NewFileWriter(conf.Config.LogDir+string(filepath.Separator)+defaultFileName, defaultLogMaxSize)
 )
 
 type fileWriter struct {

@@ -51,48 +51,47 @@ type smtpServer struct {
 	Port     int    `toml:"port" default:"25"`
 }
 
-var (
-	EnableDB    = false
-	EnableRedis = false
-)
-
 //default
 var Config *config
 var BinDir = getExecDir()
 
-func init() {
-
-	//parse config
-	loader := multiconfig.NewWithPath(BinDir + "/config.toml") // supports TOML and JSON
+func ParseConfig(path string) error {
+	if path == "" {
+		path = BinDir + "/config.toml"
+	}
+	loader := multiconfig.NewWithPath(path) // supports TOML and JSON
 	Config = &config{}
-	loader.MustLoad(Config)
-
+	err := loader.Load(Config)
+	if err != nil {
+		return err
+	}
 	//init value
 	initConfig(Config)
+	return nil
 }
 
 func initConfig(c *config) {
-	if !filepath.IsAbs(Config.TLSCert) {
-		Config.TLSCert = filepath.Join(BinDir, Config.TLSCert)
+	if !filepath.IsAbs(c.TLSCert) {
+		c.TLSCert = filepath.Join(BinDir, c.TLSCert)
 	}
 
-	if !filepath.IsAbs(Config.TLSKey) {
-		Config.TLSKey = filepath.Join(BinDir, Config.TLSKey)
+	if !filepath.IsAbs(c.TLSKey) {
+		c.TLSKey = filepath.Join(BinDir, c.TLSKey)
 	}
 
-	if !filepath.IsAbs(Config.LogDir) {
-		Config.LogDir = filepath.Join(BinDir, Config.LogDir)
+	if !filepath.IsAbs(c.LogDir) {
+		c.LogDir = filepath.Join(BinDir, c.LogDir)
 	}
 
-	if !filepath.IsAbs(Config.Data) {
-		Config.Data = filepath.Join(BinDir, Config.Data)
+	if !filepath.IsAbs(c.Data) {
+		c.Data = filepath.Join(BinDir, c.Data)
 	}
 
-	err := os.MkdirAll(Config.LogDir, 0777)
+	err := os.MkdirAll(c.LogDir, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = os.MkdirAll(Config.Data, 0777)
+	err = os.MkdirAll(c.Data, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}

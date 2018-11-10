@@ -1,11 +1,10 @@
 package api
 
 import (
+	"daemonw/conf"
 	"daemonw/controller"
 	"daemonw/middleware"
 	"github.com/gin-gonic/gin"
-	"daemonw/conf"
-	"time"
 )
 
 var router *gin.Engine
@@ -43,10 +42,6 @@ func initUserRouter() {
 
 	authRouter := router.Group("")
 	authRouter.Use(middleware.JwtAuth())
-	authRouter.GET("/setting/limit", controller.LimitUserAccessCount)
-
-	limitRouter := authRouter.Group("")
-	limitRouter.Use(middleware.UserRateLimiter(2))
-	limitRouter.Use(middleware.UserCountLimiter(20, time.Second*10))
-	limitRouter.GET("/verify", controller.GetVerifyCode)
+	authRouter.GET("/setting/limit")
+	authRouter.GET("/verify", controller.GetVerifyCode)
 }

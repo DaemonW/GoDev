@@ -1,27 +1,24 @@
 package db
 
 import (
-	"github.com/go-redis/redis"
-	"daemonw/log"
 	"daemonw/conf"
+	"github.com/go-redis/redis"
 	"strconv"
 )
 
 var rc *redis.Client
 
-func init() {
+func InitRedis() error {
 	cfg := conf.Config.Redis
 	addr := cfg.Host + ":" + strconv.Itoa(cfg.Port)
-	clientOption:=&redis.Options{
+	clientOption := &redis.Options{
 		Addr:     addr,
 		Password: cfg.Password,
 		DB:       cfg.Num,
 	}
 	rc = redis.NewClient(clientOption)
 	_, err := rc.Ping().Result()
-	if err != nil {
-		log.Fatal().Err(err).Msg("connect redis failed")
-	}
+	return err
 }
 
 func GetRedis() *redis.Client {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"daemonw/errors"
 	"github.com/gin-gonic/gin"
 	"daemonw/util"
 	"daemonw/db"
@@ -17,7 +18,7 @@ func GetVerifyCode(c *gin.Context) {
 	err := db.GetRedis().Set("verify_code:"+strconv.FormatUint(uid, 10), code, time.Minute*10).Err()
 	if err != nil {
 		log.Error().Err(err).Msg("generate verify code failed")
-		c.JSON(http.StatusInternalServerError, model.NewResp().SetError(model.ErrInternalServer))
+		c.JSON(http.StatusInternalServerError, errors.ErrInternalServer)
 		return
 	}
 	c.JSON(http.StatusOK, model.NewResp().AddResult("verify_code", code))
