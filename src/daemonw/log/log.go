@@ -19,7 +19,7 @@ var (
 	Logger zerolog.Logger
 )
 
-func initLog() {
+func InitLog() {
 	zerolog.TimeFieldFormat = ""
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	var writer io.Writer

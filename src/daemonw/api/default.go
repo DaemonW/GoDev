@@ -9,7 +9,7 @@ import (
 
 var router *gin.Engine
 
-func init() {
+func initRouter() {
 	gin.SetMode(gin.ReleaseMode)
 	router = newEngine()
 	//init routers
@@ -24,6 +24,7 @@ func newEngine() *gin.Engine {
 }
 
 func GetRouter() *gin.Engine {
+	initRouter()
 	return router
 }
 

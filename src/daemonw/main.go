@@ -23,6 +23,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	mylog.InitLog()
 	err = db.InitRedis()
 	if err!=nil{
 		log.Fatal(err)
