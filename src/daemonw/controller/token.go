@@ -4,9 +4,9 @@ import (
 	"crypto/md5"
 	"daemonw/dao"
 	"daemonw/db"
-	"daemonw/errors"
+	myerr "daemonw/errors"
 	"daemonw/log"
-	"daemonw/model"
+	. "daemonw/model"
 	"daemonw/util"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -23,14 +23,14 @@ func Login(c *gin.Context) {
 		Password string `json:"password" form:"password"`
 	}
 	if err := c.ShouldBindWith(&loginUser, binding.FormPost); err != nil {
-		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg(err.Error()))
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, err.Error()))
 		return
 	}
 
 	u, err := dao.UserDao.GetByName(loginUser.Username)
 	util.PanicIfErr(err)
 	if u == nil {
-		c.JSON(http.StatusBadRequest, errors.ErrUserNotExist)
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, myerr.MsgUserNotExist))
 		return
 	}
 
@@ -42,23 +42,23 @@ func Login(c *gin.Context) {
 		token, err := genJwtToken(u, ip)
 		if err != nil {
 			log.Error().Err(err).Msg("generate token failed")
-			c.JSON(http.StatusInternalServerError, errors.ErrInternalServer)
+			c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 			return
 		}
 		c.Writer.Header().Set("auth", token)
 		db.GetRedis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
-			model.NewResp().
+			NewResp().
 				AddResult("msg", "login success, ip address = "+ip).
 				AddResult("user", u).
 				AddResult("token", token))
 	} else {
-		c.JSON(http.StatusUnauthorized, errors.ErrInvalidAuth)
+		c.JSON(http.StatusUnauthorized, NewRespErr(myerr.Login, myerr.MsgIncorrectAuth))
 	}
 }
 
-func genJwtToken(user *model.User, ip string) (string, error) {
-	claims := model.Claims{
+func genJwtToken(user *User, ip string) (string, error) {
+	claims := Claims{
 		Ip: ip,
 		StandardClaims: jwt.StandardClaims{
 			Id:        strconv.FormatUint(user.ID, 10),

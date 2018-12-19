@@ -25,13 +25,13 @@ func JwtAuth() gin.HandlerFunc {
 		}()
 		tokenStr := c.Request.Header.Get("auth")
 		if tokenStr == "" {
-			c.JSON(http.StatusUnauthorized, model.NewResp().SetErrMsg("invalid token"))
+			c.JSON(http.StatusUnauthorized, model.NewRespErr(myerr.Auth, "invalid token"))
 			c.Abort()
 			return
 		}
 		token, err := verifyToken(tokenStr)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, model.NewResp().SetErrMsg(err.Error()))
+			c.JSON(http.StatusUnauthorized, model.NewRespErr(myerr.Auth, err.Error()))
 			c.Abort()
 			return
 		}

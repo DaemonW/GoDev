@@ -5,12 +5,13 @@ const (
 	Internal = 1000 + iota
 	Postgres
 	MySql
-	Orcle
+	Oracle
 	Redis
 	Mongo
 	Config
 
 	Biz = 2000 + iota
+	Auth
 	Login
 	CreateUser
 	QueryUser

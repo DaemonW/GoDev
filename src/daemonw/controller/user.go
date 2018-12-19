@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"daemonw/errors"
+	myerr "daemonw/errors"
 	"net/http"
 	"strconv"
 
 	"daemonw/dao"
 	"daemonw/log"
-	"daemonw/model"
+	. "daemonw/model"
 	"daemonw/util"
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
@@ -19,42 +19,42 @@ func GetUser(c *gin.Context) {
 	user, err := dao.UserDao.Get(id)
 	if err != nil {
 		log.Error().Err(err).Msg("db error")
-		c.JSON(http.StatusInternalServerError, errors.ErrInternalServer)
+		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 		return
 	}
 	if user == nil {
-		c.JSON(http.StatusBadRequest, errors.ErrUserNotExist)
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.QueryUser,myerr.MsgUserNotExist))
 		return
 	}
-	c.JSON(http.StatusOK, model.NewResp().AddResult("user", user))
+	c.JSON(http.StatusOK, NewResp().AddResult("user", user))
 }
 
 func GetAllUsers(c *gin.Context) {
 	users, err := dao.UserDao.GetAll()
 	util.PanicIfErr(err)
-	c.JSON(http.StatusOK, model.NewResp().AddResult("users", users))
+	c.JSON(http.StatusOK, NewResp().AddResult("users", users))
 }
 
 func CreateUser(c *gin.Context) {
 	var err error
 	var registerUser struct {
-		Username string `json:"username" form:"username" valid:"alphanum,length(8|16)"`
+		Username string `json:"username" form:"username" valid:"email,length(4|32)"`
 		Password string `json:"password" form:"password" valid:"printableascii,length(8|16)"`
 	}
 	if err = c.ShouldBindWith(&registerUser, binding.JSON); err != nil {
-		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg(err.Error()))
+		c.JSON(http.StatusNotAcceptable, NewRespErr(myerr.CreateUser, myerr.MsgBadParam))
 		return
 	}
 	_, err = govalidator.ValidateStruct(registerUser)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, model.NewResp().SetErrMsg("bad format"))
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser, myerr.MsgBadParam))
 		return
 	}
-	user := model.NewUser(registerUser.Username, registerUser.Password)
+	user := NewUser(registerUser.Username, registerUser.Password)
 	if err = dao.UserDao.CreateUser(user); err != nil {
-		c.JSON(http.StatusBadRequest, errors.ErrCreateUser)
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser,myerr.MsgCreateUserFail))
 	} else {
-		resp := model.NewResp().AddResult("msg", "create user success")
+		resp := NewResp().AddResult("msg", "create user success")
 		c.JSON(http.StatusOK, resp)
 	}
 }

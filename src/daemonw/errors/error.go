@@ -4,9 +4,6 @@ import "fmt"
 
 var (
 	ErrInternalServer = &ErrMsg{Internal, MsgInternal,}
-	ErrUserNotExist   = &ErrMsg{CreateUser, MsgUserNotExist}
-	ErrInvalidAuth    = &ErrMsg{Login,MsgIncorrectAuth}
-	ErrCreateUser     = &ErrMsg{CreateUser, MsgCreateUser}
 )
 
 type ErrMsg struct {
@@ -15,5 +12,9 @@ type ErrMsg struct {
 }
 
 func (err *ErrMsg) String() string {
-	return fmt.Sprintf("err = %s, code = %d", err.Msg, err.Code)
+	return fmt.Sprintf("errno: %d, %s", err.Code, err.Msg)
+}
+
+func (err *ErrMsg) Error() string {
+	return fmt.Sprintf("errno: %d, %s", err.Code, err.Msg)
 }

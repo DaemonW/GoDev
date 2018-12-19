@@ -14,6 +14,12 @@ func NewResp() *Response {
 	return resp
 }
 
+func NewRespErr(errCode int, errMsg string) *Response {
+	resp := &Response{}
+	resp.Err = &errors.ErrMsg{errCode, errMsg}
+	return resp
+}
+
 func (r *Response) AddResult(key string, val interface{}) *Response {
 	if r.Result == nil {
 		r.Result = make(map[string]interface{})
@@ -22,18 +28,11 @@ func (r *Response) AddResult(key string, val interface{}) *Response {
 	return r
 }
 
-func (r *Response) SetErrCode(errCode int) *Response {
+func (r *Response) WithErrMsg(errCode int, errMsg string) *Response {
 	if r.Err == nil {
 		r.Err = &errors.ErrMsg{}
 	}
-	r.Err.Code = errCode
-	return r
-}
-
-func (r *Response) SetErrMsg(errMsg string) *Response {
-	if r.Err == nil {
-		r.Err = &errors.ErrMsg{}
-	}
+	r.Err.Code = errCode;
 	r.Err.Msg = errMsg
 	return r
 }
