@@ -1,5 +1,7 @@
 package dao
 
-var (
+var UserDao *userDao
+
+func InitDaoManager(){
 	UserDao = newUserDao()
-)
+}

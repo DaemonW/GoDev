@@ -44,7 +44,7 @@ func LoggerWithWriter(ignore ...string) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 			comment := c.Errors.ByType(gin.ErrorTypePrivate).String()
-			log.Debug().Msgf("%s    %d    %v    %s    %s    %s    %s\n",
+			log.Debug().Msgf("%s    %d    %v    %s    %s    %s    %s",
 				end.Format("2006/01/02 - 15:04:05"),
 				statusCode,
 				latency,

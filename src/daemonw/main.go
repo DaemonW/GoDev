@@ -16,6 +16,7 @@ import (
 	"crypto/tls"
 	"daemonw/db"
 	"syscall"
+	"daemonw/dao"
 )
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	dao.InitDaoManager()
 	defer closeDBConn()
 
 	cfg := conf.Config

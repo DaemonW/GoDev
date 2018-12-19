@@ -5,10 +5,8 @@ import (
 	"github.com/rs/zerolog"
 	"os"
 	"path/filepath"
-	"time"
 	"io"
 	"context"
-	"bytes"
 )
 
 const (
@@ -23,16 +21,10 @@ func InitLog() {
 	zerolog.TimeFieldFormat = ""
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	var writer io.Writer
-	t := time.Now()
 	writer = zerolog.ConsoleWriter{Out: os.Stderr}
 	if (enableFileLog) {
 		fileWriter := NewFileWriter(conf.Config.LogDir+string(filepath.Separator)+defaultFileName, defaultLogMaxSize)
 		writer = io.MultiWriter(writer, fileWriter)
-		var buf bytes.Buffer
-		buf.WriteString("\r\n*************************************")
-		buf.WriteString(t.Format(" 2006-01-02 15:04:05 ") + "start server... ")
-		buf.WriteString("*************************************\r\n\r\n")
-		fileWriter.Write(buf.Bytes())
 	}
 	Logger = zerolog.New(writer).With().Timestamp().Logger()
 }
