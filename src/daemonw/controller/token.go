@@ -22,7 +22,7 @@ func Login(c *gin.Context) {
 		Username string `json:"username" form:"username"`
 		Password string `json:"password" form:"password"`
 	}
-	if err := c.ShouldBindWith(&loginUser, binding.FormPost); err != nil {
+	if err := c.ShouldBindWith(&loginUser, binding.JSON); err != nil {
 		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, err.Error()))
 		return
 	}
@@ -38,7 +38,7 @@ func Login(c *gin.Context) {
 	encPass := fmt.Sprintf("%x", md5.Sum(b))
 	if encPass == u.Password {
 		ip := util.GetRequestIP(c.Request, false)
-		u.LoginIp = ip
+		log.Info().Msgf("%s request for login, ip = %s", loginUser.Username, ip)
 		token, err := genJwtToken(u, ip)
 		if err != nil {
 			log.Error().Err(err).Msg("generate token failed")
@@ -49,7 +49,7 @@ func Login(c *gin.Context) {
 		db.GetRedis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			NewResp().
-				AddResult("msg", "login success, ip address = "+ip).
+				AddResult("msg", "login success").
 				AddResult("user", u).
 				AddResult("token", token))
 	} else {

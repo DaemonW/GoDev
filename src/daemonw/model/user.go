@@ -12,7 +12,6 @@ type User struct {
 	Username string    `json:"username" db:"username"`
 	Password string    `json:"-" form:"password"`
 	Salt     []byte    `json:"-"`
-	LoginIp  string    `json:"loginIp" db:"login_ip"`
 	CreateAt time.Time `json:"createAt" db:"create_at"`
 	UpdateAt time.Time `json:"updateAt" db:"update_at"`
 }

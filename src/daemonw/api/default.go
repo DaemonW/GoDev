@@ -14,7 +14,7 @@ func initRouter() {
 	router = newEngine()
 	//init routers
 	initUserRouter()
-	initStaticRouter()
+	//initStaticRouter()
 }
 
 func newEngine() *gin.Engine {
@@ -39,7 +39,8 @@ func initUserRouter() {
 	router.GET("/users/:user_id", controller.GetUser)
 	router.POST("/users", controller.CreateUser)
 	router.POST("/login", controller.Login)
-	router.GET("/users", controller.GetAllUsers)
+	router.GET("/api/user",controller.ActiveUser)
+	router.GET("/users", controller.GetUsers)
 
 	authRouter := router.Group("")
 	authRouter.Use(middleware.JwtAuth())

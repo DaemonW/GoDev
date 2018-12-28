@@ -7,5 +7,6 @@ const (
 	MsgUserNotExist   = "user does not exist"
 	MsgIncorrectAuth  = "incorrect username or password"
 	MsgCreateUserFail = "failed to create user"
+	MsgActiveUserFail = "failed to active user"
 	MsgBadParam       = "bad param format"
 )

@@ -12,6 +12,12 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"gopkg.in/gomail.v2"
+	"crypto/tls"
+	"daemonw/conf"
+	"daemonw/db"
+	"fmt"
+	"time"
 )
 
 func GetUser(c *gin.Context) {
@@ -23,14 +29,19 @@ func GetUser(c *gin.Context) {
 		return
 	}
 	if user == nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.QueryUser,myerr.MsgUserNotExist))
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.QueryUser, myerr.MsgUserNotExist))
 		return
 	}
 	c.JSON(http.StatusOK, NewResp().AddResult("user", user))
 }
 
-func GetAllUsers(c *gin.Context) {
-	users, err := dao.UserDao.GetAll()
+func GetUsers(c *gin.Context) {
+	name := c.Query("name")
+	if name == "" {
+		c.JSON(http.StatusOK, NewResp().AddResult("users", nil))
+		return
+	}
+	users, err := dao.UserDao.GetLikeName(name)
 	util.PanicIfErr(err)
 	c.JSON(http.StatusOK, NewResp().AddResult("users", users))
 }
@@ -51,10 +62,61 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	user := NewUser(registerUser.Username, registerUser.Password)
+	qUser, err := dao.UserDao.GetByName(registerUser.Username)
+	if err != nil {
+		log.Error().Msgf(err.Error())
+		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
+		return
+	}
+	if qUser != nil {
+		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.CreateUser, myerr.MsgUserExist))
+		return
+	}
 	if err = dao.UserDao.CreateUser(user); err != nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser,myerr.MsgCreateUserFail))
+		log.Error().Msgf(err.Error())
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser, myerr.MsgCreateUserFail))
 	} else {
+		go sendMail(user)
 		resp := NewResp().AddResult("msg", "create user success")
 		c.JSON(http.StatusOK, resp)
 	}
+}
+
+func ActiveUser(c *gin.Context) {
+	id := c.Query("id")
+	code := c.Query("code")
+	if id == "" || code == "" {
+		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
+		return
+	}
+	request_code := db.GetRedis().Get("request_code:" + id).String()
+	if request_code != code {
+		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
+		return
+	}
+	c.JSON(http.StatusOK, NewResp().AddResult("msg", "user is active"))
+}
+
+func sendMail(user *User) error {
+	serverConf := conf.Config.SmtpServer
+	d := gomail.NewDialer(serverConf.Host, serverConf.Port, serverConf.Account, serverConf.Password)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	m := gomail.NewMessage()
+	m.SetHeader("From", serverConf.Account)
+	m.SetHeader("To", user.Username)
+	//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
+	m.SetHeader("Subject", "Hello!")
+	m.SetBody("text/html", ``)
+	m.Attach("/home/daemonw/Pictures/1531905129160.jpg")
+	return d.DialAndSend(m)
+}
+
+func genActiveUrl(user *User) string {
+	key := fmt.Sprintf("request_code:%d", user.ID)
+	code := util.RandomNum(16)
+	err := db.GetRedis().SetXX(key, code, time.Minute*10).Err()
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("http://localhost:8080/api/user?id=%s&&request_code=%d", user.ID, code)
 }
