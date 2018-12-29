@@ -21,11 +21,13 @@ func InitLog() {
 	zerolog.TimeFieldFormat = ""
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	var writer io.Writer
-	writer = zerolog.ConsoleWriter{Out: os.Stderr}
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+	logDir := conf.Config.LogDir + string(filepath.Separator) + defaultFileName
 	if (enableFileLog) {
-		fileWriter := NewChanWriter(conf.Config.LogDir+string(filepath.Separator)+defaultFileName, defaultLogMaxSize)
-		fileWriter.Sync()
-		writer = io.MultiWriter(writer, fileWriter)
+		fileWriter := NewFileWriter(logDir, defaultLogMaxSize)
+		writer = io.MultiWriter(consoleWriter, fileWriter)
+	} else {
+		writer = io.MultiWriter(consoleWriter)
 	}
 	Logger = zerolog.New(writer).With().Timestamp().Logger()
 }

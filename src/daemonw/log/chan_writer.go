@@ -36,7 +36,7 @@ func (writer *ChanWriter) Write(p []byte) (n int, err error) {
 func (writer *ChanWriter) Sync() {
 	go func() {
 		for {
-			msg,ok := <-writer.msgChan
+			msg, ok := <-writer.msgChan
 			if !ok {
 				break
 			}

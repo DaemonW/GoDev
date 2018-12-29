@@ -17,9 +17,24 @@ import (
 	"daemonw/db"
 	"syscall"
 	"daemonw/dao"
+	"fmt"
 )
 
-func main() {
+func main(){
+	err := conf.ParseConfig("")
+	if err != nil {
+		dlog.Fatal(err)
+	}
+	log.InitLog()
+	t1:=time.Now()
+	for i:=0;i<1000;i++{
+		log.Info().Msg("test")
+	}
+	d:=time.Now().Sub(t1)
+	fmt.Printf("cost = %d",d.Nanoseconds()/1000)
+}
+
+func tset() {
 	err := conf.ParseConfig("")
 	if err != nil {
 		dlog.Fatal(err)
