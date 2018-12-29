@@ -23,7 +23,8 @@ func InitLog() {
 	var writer io.Writer
 	writer = zerolog.ConsoleWriter{Out: os.Stderr}
 	if (enableFileLog) {
-		fileWriter := NewFileWriter(conf.Config.LogDir+string(filepath.Separator)+defaultFileName, defaultLogMaxSize)
+		fileWriter := NewChanWriter(conf.Config.LogDir+string(filepath.Separator)+defaultFileName, defaultLogMaxSize)
+		fileWriter.Sync()
 		writer = io.MultiWriter(writer, fileWriter)
 	}
 	Logger = zerolog.New(writer).With().Timestamp().Logger()

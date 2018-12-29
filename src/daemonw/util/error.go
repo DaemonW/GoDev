@@ -1,7 +1,7 @@
 package util
 
 import (
-	"log"
+	dlog "log"
 	"runtime/debug"
 )
 
@@ -9,7 +9,7 @@ var DEBUG bool = false
 
 func CheckFatal(err error) {
 	if err != nil {
-		log.Fatal(err)
+		dlog.Fatal(err)
 
 		debug.PrintStack()
 	}

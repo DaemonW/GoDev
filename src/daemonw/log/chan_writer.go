@@ -1,45 +1,58 @@
 package log
 
 import (
+	"time"
 	"os"
 	"path/filepath"
-	"time"
 	"sync"
+	"fmt"
 	dlog "log"
 )
 
-const (
-	defaultFileName   = "current.log"
-	defaultLogMaxSize = 2 * 1024 * 1024
-)
-
-type fileWriter struct {
+type ChanWriter struct {
 	filePath string
+	msgChan  chan []byte
+	cap      int
 	time     time.Time
 	f        *os.File
 	size     int64
 	maxSize  int64
-	locker   sync.Mutex
+	locker   sync.Locker
 }
 
-func NewFileWriter(filePath string, maxSize int64) *fileWriter {
-	writer := &fileWriter{filePath: filePath, time: time.Now(), maxSize: maxSize}
+func NewChanWriter(filePath string, maxSize int64) *ChanWriter {
+	writer := &ChanWriter{filePath: filePath, time: time.Now(), maxSize: maxSize}
+	writer.cap = 1024 * 16
+	writer.msgChan = make(chan []byte, writer.cap)
 	writer.output(filePath)
 	return writer
 }
 
-func (writer *fileWriter) Write(p []byte) (n int, err error) {
-	writer.locker.Lock()
-	n, err = writer.f.Write(p)
-	writer.size += int64(n)
-	if writer.size >= writer.maxSize {
-		writer.next()
-	}
-	writer.locker.Unlock()
-	return n, err
+func (writer *ChanWriter) Write(p []byte) (n int, err error) {
+	writer.msgChan <- p
+	return len(p), nil
 }
 
-func (writer *fileWriter) next() {
+func (writer *ChanWriter) Sync() {
+	go func() {
+		for {
+			msg,ok := <-writer.msgChan
+			if !ok {
+				break
+			}
+			n, err := writer.f.Write(msg)
+			if err != nil {
+				fmt.Println(err)
+			}
+			writer.size += int64(n)
+			if writer.size >= writer.maxSize {
+				writer.next()
+			}
+		}
+	}()
+}
+
+func (writer *ChanWriter) next() {
 	writer.f.Sync()
 	writer.f.Close()
 	dir := filepath.Dir(writer.filePath)
@@ -47,7 +60,7 @@ func (writer *fileWriter) next() {
 	writer.output(writer.filePath)
 }
 
-func (writer *fileWriter) output(filePath string) {
+func (writer *ChanWriter) output(filePath string) {
 	var file *os.File
 	fi, err := os.Stat(filePath)
 	if err != nil {
