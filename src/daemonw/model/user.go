@@ -7,11 +7,18 @@ import (
 	"time"
 )
 
+const (
+	STATUS_UNACTIVE = iota
+	STATUS_NORMAL
+	STATUS_FREEZE
+)
+
 type User struct {
 	ID       uint64    `json:"id" db:"id"`
-	Username string    `json:"username" db:"username"`
-	Password string    `json:"-" form:"password"`
+	Username string    `json:"username"`
+	Password string    `json:"-"`
 	Salt     []byte    `json:"-"`
+	Status   uint8     `json:"status"`
 	CreateAt time.Time `json:"createAt" db:"create_at"`
 	UpdateAt time.Time `json:"updateAt" db:"update_at"`
 }

@@ -70,6 +70,7 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 		if user == nil {
 			return nil, errors.New("invalid token")
 		}
+		db.GetRedis().Set("token_secret:"+claims.Id, user.Password, 0)
 		return []byte(user.Password), nil
 	})
 	return token, err

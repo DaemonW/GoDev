@@ -60,3 +60,8 @@ func (dao *userDao) DeleteUser(id int64) error {
 	_, err := dao.conn.Exec(`DELETE FROM users WHERE id=$1`, id)
 	return err
 }
+
+func (dao *userDao) ActiveUser(id int64) error {
+	_, err := dao.conn.Exec(`UPDATE users SET status=0 WHERE id=$1`, id)
+	return err
+}

@@ -9,4 +9,5 @@ const (
 	MsgCreateUserFail = "failed to create user"
 	MsgActiveUserFail = "failed to active user"
 	MsgBadParam       = "bad param format"
+	MsgIllegalVerifyScope      = "illegal verify scope"
 )

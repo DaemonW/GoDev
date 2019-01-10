@@ -34,6 +34,16 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	if u.Status == STATUS_UNACTIVE {
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, "account is not active"))
+		return
+	}
+
+	if u.Status == STATUS_FREEZE {
+		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, "account is frozen"))
+		return
+	}
+
 	b := append([]byte(loginUser.Password), u.Salt...)
 	encPass := fmt.Sprintf("%x", md5.Sum(b))
 	if encPass == u.Password {

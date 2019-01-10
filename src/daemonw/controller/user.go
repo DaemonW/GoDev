@@ -49,8 +49,8 @@ func GetUsers(c *gin.Context) {
 func CreateUser(c *gin.Context) {
 	var err error
 	var registerUser struct {
-		Username string `json:"username" form:"username" valid:"email,length(4|32)"`
-		Password string `json:"password" form:"password" valid:"printableascii,length(8|16)"`
+		Username string `json:"username" valid:"email,length(4|32)"`
+		Password string `json:"password" valid:"printableascii,length(8|16)"`
 	}
 	if err = c.ShouldBindWith(&registerUser, binding.JSON); err != nil {
 		c.JSON(http.StatusNotAcceptable, NewRespErr(myerr.CreateUser, myerr.MsgBadParam))
@@ -83,18 +83,30 @@ func CreateUser(c *gin.Context) {
 }
 
 func ActiveUser(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Param("id")
 	code := c.Query("code")
 	if id == "" || code == "" {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
 		return
 	}
-	request_code := db.GetRedis().Get("request_code:" + id).String()
+	request_code := db.GetRedis().Get("verify_code:active" + id).String()
 	if request_code != code {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
 		return
 	}
+	uid, _ := strconv.ParseInt(id, 10, 64)
+	err := dao.UserDao.ActiveUser(uid)
+	if err != nil {
+		panic(err)
+	}
 	c.JSON(http.StatusOK, NewResp().AddResult("msg", "user is active"))
+}
+
+func SendActiveMail(c *gin.Context) {
+	email:=c.Query("email")
+	if email==""{
+
+	}
 }
 
 func sendMail(user *User) error {
@@ -106,17 +118,17 @@ func sendMail(user *User) error {
 	m.SetHeader("To", user.Username)
 	//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 	m.SetHeader("Subject", "Hello!")
-	m.SetBody("text/html", ``)
+	m.SetBody("text/html", genActiveUrl(user))
 	m.Attach("/home/daemonw/Pictures/1531905129160.jpg")
 	return d.DialAndSend(m)
 }
 
 func genActiveUrl(user *User) string {
-	key := fmt.Sprintf("request_code:%d", user.ID)
+	key := fmt.Sprintf("verify_code:active:%d", user.ID)
 	code := util.RandomNum(16)
 	err := db.GetRedis().SetXX(key, code, time.Minute*10).Err()
 	if err != nil {
 		panic(err)
 	}
-	return fmt.Sprintf("http://localhost:8080/api/user?id=%s&&request_code=%d", user.ID, code)
+	return fmt.Sprintf("http://localhost:8080/api/user/%d?verify_code=%s", user.ID, code)
 }

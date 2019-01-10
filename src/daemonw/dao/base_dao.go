@@ -7,10 +7,10 @@ import (
 )
 
 type daoConn interface {
-	Get(dest interface{}, query string, args ...interface{}) error
-	Select(dest interface{}, query string, args ...interface{}) error
-	NamedExec(query string, arg interface{}) (sql.Result, error)
-	Exec(query string, args ...interface{}) (sql.Result, error)
+	Get(obj interface{}, sqlStatement string, args ...interface{}) error
+	Select(obj interface{}, sqlStatement string, args ...interface{}) error
+	NamedExec(sqlStatement string, arg interface{}) (sql.Result, error)
+	Exec(sqlStatement string, args ...interface{}) (sql.Result, error)
 }
 type baseDao struct {
 	db       *sqlx.DB

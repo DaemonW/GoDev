@@ -36,14 +36,14 @@ func initStaticRouter() {
 }
 
 func initUserRouter() {
-	router.GET("/users/:user_id", controller.GetUser)
-	router.POST("/users", controller.CreateUser)
-	router.POST("/login", controller.Login)
-	router.GET("/api/user",controller.ActiveUser)
-	router.GET("/users", controller.GetUsers)
+	router.GET("/api/user/:user_id", controller.GetUser)
+	router.POST("/api/users", controller.CreateUser)
+	router.POST("/api/user/auth/token", controller.Login)
+	router.POST("/api/user/auth/active", controller.Login)
+	router.PUT("/api/user/:user_id", controller.ActiveUser)
+	router.GET("/api/users", controller.GetUsers)
 
 	authRouter := router.Group("")
 	authRouter.Use(middleware.JwtAuth())
-	authRouter.GET("/setting/limit")
-	authRouter.GET("/verify", controller.GetVerifyCode)
+	authRouter.GET("/security/verify_code", controller.GetVerifyCode)
 }
