@@ -22,10 +22,10 @@ domain = "example.com"
 port = 8080
 
 ### dir to storage files
-data = "./data"
+data = "/tmp/data"
 
 ### dir to storage log files
-log_dir = "./log"
+log_dir = "/tmp/log"
 
 ### database config
 [database]
