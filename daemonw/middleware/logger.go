@@ -3,7 +3,7 @@ package middleware
 import (
 	"time"
 	"github.com/gin-gonic/gin"
-	"daemonw/log"
+	"daemonw/xlog"
 )
 
 // By default gin.DefaultWriter = os.Stdout.
@@ -44,7 +44,7 @@ func LoggerWithWriter(ignore ...string) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 			comment := c.Errors.ByType(gin.ErrorTypePrivate).String()
-			log.Debug().Msgf("%s    %d    %v    %s    %s    %s    %s",
+			xlog.Debug().Msgf("%s    %d    %v    %s    %s    %s    %s",
 				end.Format("2006/01/02 - 15:04:05"),
 				statusCode,
 				latency,

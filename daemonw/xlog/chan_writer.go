@@ -1,4 +1,4 @@
-package log
+package xlog
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 	"fmt"
-	dlog "log"
+	log "log"
 )
 
 type ChanWriter struct {
@@ -75,7 +75,7 @@ func (writer *ChanWriter) output(filePath string) {
 		//writer.f.Seek(writer.size, 0)
 	}
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	writer.f = file
 }

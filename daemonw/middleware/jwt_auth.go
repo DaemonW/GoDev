@@ -11,14 +11,14 @@ import (
 	"daemonw/db"
 	myerr "daemonw/errors"
 	"strconv"
-	"daemonw/log"
+	"daemonw/xlog"
 )
 
 func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Error().Err(err.(error)).Msg("verify token")
+				xlog.Error().Err(err.(error)).Msg("verify token")
 				c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 				c.Abort()
 			}

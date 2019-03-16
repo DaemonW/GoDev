@@ -1,7 +1,7 @@
 package main
 
 import (
-	dlog "log"
+	"log"
 	"net/http"
 	"daemonw/api"
 	"os"
@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"daemonw/conf"
 	"path/filepath"
-	"daemonw/log"
+	"daemonw/xlog"
 	"golang.org/x/crypto/acme/autocert"
 	"crypto/tls"
 	"daemonw/db"
@@ -23,16 +23,16 @@ import (
 func main() {
 	err := conf.ParseConfig("")
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
-	log.InitLog()
+	xlog.InitLog()
 	err = db.InitRedis()
 	if err!=nil{
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	err = db.InitDB()
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	dao.InitDaoManager()
 	defer closeDBConn()
@@ -57,10 +57,10 @@ func main() {
 	}
 	go func() {
 		if !cfg.TLS {
-			log.Info().Msgf("start http server on %d", cfg.Port)
+			xlog.Info().Msgf("start http server on %d", cfg.Port)
 			err = srv.ListenAndServe()
 		} else {
-			log.Info().Msgf("start https server on %d", cfg.Port)
+			xlog.Info().Msgf("start https server on %d", cfg.Port)
 			if cfg.UseAutoCert {
 				err = srv.ListenAndServeTLS("", "")
 			} else {
@@ -71,7 +71,7 @@ func main() {
 			if err == http.ErrServerClosed {
 				return
 			}
-			log.Fatal().Err(err).Msg("start server failed")
+			xlog.Fatal().Err(err).Msg("start server failed")
 		}
 	}()
 
@@ -84,21 +84,21 @@ func listenShutdownSignal(srv *http.Server) {
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-quit
-	log.Info().Msg("shutdown server")
+	xlog.Info().Msg("shutdown server")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Error().Err(err).Msg("shutdown server error")
+		xlog.Error().Err(err).Msg("shutdown server error")
 	}
 }
 
 func closeDBConn() {
 	if db.GetDB() != nil {
-		log.Info().Msg("close database connection")
+		xlog.Info().Msg("close database connection")
 		db.GetDB().Close()
 	}
 	if db.GetRedis() != nil {
-		log.Info().Msg("close redis connection")
+		xlog.Info().Msg("close redis connection")
 		db.GetRedis().Close()
 	}
 }

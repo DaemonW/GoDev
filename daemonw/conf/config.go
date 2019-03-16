@@ -8,7 +8,7 @@ import (
 
 	"github.com/koding/multiconfig"
 	"os/exec"
-	dlog "log"
+	log "log"
 )
 
 //default params for config, perfer to load value from the file named "local.conf", the value is json style
@@ -89,35 +89,35 @@ func initConfig(c *config) {
 
 	err := os.MkdirAll(c.LogDir, 0777)
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	err = os.MkdirAll(c.Data, 0777)
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
 func getExecDir() string {
 	execPath, err := exec.LookPath(os.Args[0])
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	//    Is Symlink
 	fi, err := os.Lstat(execPath)
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
 		execPath, err = os.Readlink(execPath)
 		if err != nil {
-			dlog.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 	execDir := filepath.Dir(execPath)
 	if execDir == "." {
 		execDir, err = os.Getwd()
 		if err != nil {
-			dlog.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 	return execDir

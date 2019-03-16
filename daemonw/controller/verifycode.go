@@ -8,7 +8,7 @@ import (
 	"time"
 	"net/http"
 	"daemonw/model"
-	"daemonw/log"
+	"daemonw/xlog"
 	"strings"
 	"fmt"
 )
@@ -28,7 +28,7 @@ func GetVerifyCode(c *gin.Context) {
 	request_key := fmt.Sprintf("verify_code:%s:%d", scope, uid)
 	err := db.GetRedis().Set(request_key, code, time.Minute*10).Err()
 	if err != nil {
-		log.Error().Err(err).Msg("generate verify code failed")
+		xlog.Error().Err(err).Msg("generate verify code failed")
 		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 		return
 	}

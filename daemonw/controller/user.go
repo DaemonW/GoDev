@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"daemonw/dao"
-	"daemonw/log"
+	"daemonw/xlog"
 	. "daemonw/model"
 	"daemonw/util"
 	"github.com/asaskevich/govalidator"
@@ -24,7 +24,7 @@ func GetUser(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("user_id"), 10, 64)
 	user, err := dao.UserDao.Get(id)
 	if err != nil {
-		log.Error().Err(err).Msg("db error")
+		xlog.Error().Err(err).Msg("db error")
 		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 		return
 	}
@@ -64,7 +64,7 @@ func CreateUser(c *gin.Context) {
 	user := NewUser(registerUser.Username, registerUser.Password)
 	qUser, err := dao.UserDao.GetByName(registerUser.Username)
 	if err != nil {
-		log.Error().Msgf(err.Error())
+		xlog.Error().Msgf(err.Error())
 		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 		return
 	}
@@ -73,7 +73,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	if err = dao.UserDao.CreateUser(user); err != nil {
-		log.Error().Msgf(err.Error())
+		xlog.Error().Msgf(err.Error())
 		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser, myerr.MsgCreateUserFail))
 	} else {
 		go sendMail(user)

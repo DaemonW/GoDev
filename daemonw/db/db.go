@@ -3,7 +3,7 @@ package db
 import (
 	"daemonw/conf"
 	"fmt"
-	dlog "log"
+	log "log"
 
 	//orm style tools
 	"github.com/jmoiron/sqlx"
@@ -66,7 +66,7 @@ func existTable(name string) bool {
 	rowNum := 0
 	err := db.Get(&rowNum, `select count(*) from pg_class where relname = $1;`, name)
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	return rowNum > 0
 }

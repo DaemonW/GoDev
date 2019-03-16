@@ -1,11 +1,11 @@
-package log
+package xlog
 
 import (
 	"os"
 	"path/filepath"
 	"time"
 	"sync"
-	dlog "log"
+	log "log"
 )
 
 const (
@@ -62,7 +62,7 @@ func (writer *fileWriter) output(filePath string) {
 		//writer.f.Seek(writer.size, 0)
 	}
 	if err != nil {
-		dlog.Fatal(err)
+		log.Fatal(err)
 	}
 	writer.f = file
 }

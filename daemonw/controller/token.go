@@ -5,7 +5,7 @@ import (
 	"daemonw/dao"
 	"daemonw/db"
 	myerr "daemonw/errors"
-	"daemonw/log"
+	"daemonw/xlog"
 	. "daemonw/model"
 	"daemonw/util"
 	"fmt"
@@ -48,10 +48,10 @@ func Login(c *gin.Context) {
 	encPass := fmt.Sprintf("%x", md5.Sum(b))
 	if encPass == u.Password {
 		ip := util.GetRequestIP(c.Request, false)
-		log.Info().Msgf("%s request for login, ip = %s", loginUser.Username, ip)
+		xlog.Info().Msgf("%s request for login, ip = %s", loginUser.Username, ip)
 		token, err := genJwtToken(u, ip)
 		if err != nil {
-			log.Error().Err(err).Msg("generate token failed")
+			xlog.Error().Err(err).Msg("generate token failed")
 			c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
 			return
 		}
