@@ -7,15 +7,16 @@ import (
 
 var DEBUG bool = false
 
-func CheckFatal(err error) {
+func FatalIfErr(err error, trace bool) {
 	if err != nil {
 		log.Fatal(err)
-
-		debug.PrintStack()
+		if trace{
+			printTrace()
+		}
 	}
 }
 
-func PrintStackTrace() {
+func printTrace() {
 	debug.PrintStack()
 }
 

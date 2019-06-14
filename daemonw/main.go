@@ -6,25 +6,21 @@ import (
 	"daemonw/api"
 	"daemonw/conf"
 	"daemonw/dao"
+	"daemonw/util"
 	"daemonw/xlog"
-	"golang.org/x/crypto/acme/autocert"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
 )
 
 func main() {
-	err := conf.ParseConfig("")
-	if err != nil {
-		log.Fatal(err)
-	}
+	conf.InitConfig()
 	xlog.InitLog()
-	err = dao.InitRedis()
+	err := dao.InitRedis()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,15 +34,6 @@ func main() {
 	cfg := conf.Config
 	router := api.GetRouter()
 	var tlsConf *tls.Config
-	//let's encrypt auto cert
-	if cfg.TLS && cfg.UseAutoCert {
-		certManager := autocert.Manager{
-			Cache:      autocert.DirCache(conf.BinDir + string(filepath.Separator) + ".certs"),
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(cfg.Domain),
-		}
-		tlsConf = &tls.Config{GetCertificate: certManager.GetCertificate}
-	}
 	//tls config
 	srv := &http.Server{
 		Addr:      ":" + strconv.Itoa(cfg.Port),
@@ -59,11 +46,7 @@ func main() {
 			err = srv.ListenAndServe()
 		} else {
 			xlog.Info().Msgf("start https server on %d", cfg.Port)
-			if cfg.UseAutoCert {
-				err = srv.ListenAndServeTLS("", "")
-			} else {
-				err = srv.ListenAndServeTLS(cfg.TLSCert, cfg.TLSKey)
-			}
+			err = srv.ListenAndServeTLS(cfg.TLSCert, cfg.TLSKey)
 		}
 		if err != nil {
 			if err == http.ErrServerClosed {
@@ -74,6 +57,10 @@ func main() {
 	}()
 
 	listenShutdownSignal(srv)
+}
+
+func init() {
+
 }
 
 func listenShutdownSignal(srv *http.Server) {
@@ -93,16 +80,10 @@ func listenShutdownSignal(srv *http.Server) {
 func closeDBConn() {
 	if dao.DB() != nil {
 		xlog.Info().Msg("close database connection")
-		fatalErr(dao.DB().Close())
+		util.FatalIfErr(dao.DB().Close(), false)
 	}
 	if dao.Redis() != nil {
 		xlog.Info().Msg("close redis connection")
-		fatalErr(dao.Redis().Close())
-	}
-}
-
-func fatalErr(err error) {
-	if err != nil {
-		log.Fatal(err)
+		util.FatalIfErr(dao.Redis().Close(), false)
 	}
 }

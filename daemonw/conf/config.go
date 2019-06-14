@@ -4,97 +4,102 @@ package conf
 import (
 	"os"
 
-	"path/filepath"
-
-	"github.com/koding/multiconfig"
+	"github.com/spf13/viper"
 	"log"
 	"os/exec"
+	"path/filepath"
 )
 
 //default params for config, perfer to load value from the file named "local.conf", the value is json style
 type config struct {
-	TLSCert     string     `toml:"tls_cert"` //server certificate
-	TLSKey      string     `toml:"tls_key"`  //server private key
-	TLS         bool       `toml:"tls" default:"true"`
-	UseAutoCert bool       `toml:"use_auto_cert" default:"false"`
-	Domain      string     `toml:"domain" default:"localhost"`
-	Port        int        `toml:"port" default:"8080"` //port
-	LogDir      string     `toml:"log_dir" default:"/tmp/log"`
-	Data        string     `toml:"data" default:"./data"` //dir to store the data
-	Database    database   `toml:"database"`
-	Redis       redis      `toml:"redis"`
-	SmtpServer  smtpServer `toml:"smtp_server"`
+	TLSCert    string //server certificate
+	TLSKey     string //server private key
+	TLS        bool
+	Domain     string
+	Port       int //port
+	LogDir     string
+	Data       string //dir to store the data
+	Database   database
+	Redis      redis
+	SmtpServer smtpServer
 }
 
 // Postgres is here for embedded struct feature
 type database struct {
-	Host     string `toml:"host"`
-	Port     int    `toml:"port" default:"5432"`
-	Name     string `toml:"name" required:"true"`
-	User     string `toml:"user" default:"postgres"`
-	Password string `toml:"password"`
-	SSLMode  string `toml:"ssl_mode" default:"disable"`
+	Host     string
+	Port     int
+	Name     string
+	User     string
+	Password string
+	SSLMode  string
 }
 
 type redis struct {
-	Host     string `toml:"host"`
-	Port     int    `toml:"port" default:"6379"`
-	Num      int    `toml:"num" default:"0"`
-	Password string `toml:"password"`
-	MaxConn  int    `toml:"max_conn"`
+	Host     string
+	Port     int
+	Num      int
+	Password string
+	MaxConn  int
 }
 
 type smtpServer struct {
-	Account  string `toml:"account"`
-	Password string `toml:"password"`
-	Host     string `toml:"host"` //smtp server to send email
-	Port     int    `toml:"port" default:"25"`
+	Account  string
+	Password string
+	Host     string
+	Port     int
 }
 
 //default
 var Config *config
-var BinDir = getExecDir()
 
-func ParseConfig(path string) error {
-	if path == "" {
-		path = BinDir + "/config.toml"
-	}
-	loader := multiconfig.NewWithPath(path) // supports TOML and JSON
-	Config = &config{}
-	err := loader.Load(Config)
+func InitConfig() {
+	viper.SetConfigName(ConfigName)             // name of config file (without extension)
+	viper.AddConfigPath("/etc/" + ServerName)   // path to look for the config file in
+	viper.AddConfigPath("$HOME/." + ServerName) // call multiple times to add many search paths
+	viper.AddConfigPath(getExecDir()) // call multiple times to add many search paths
+	viper.AddConfigPath(".")                    // optionally look for config in the working directory
+	viper.SetConfigType("toml")
+
+	setDefault()
+
+	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	//init value
-	initConfig(Config)
-	return nil
+	Config = &config{}
+	err = viper.Unmarshal(Config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.MkdirAll(Config.LogDir, 0666)
+	if err != nil {
+		panic(err)
+	}
+	err = os.MkdirAll(Config.Data, 0666)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func initConfig(c *config) {
-	if !filepath.IsAbs(c.TLSCert) {
-		c.TLSCert = filepath.Join(BinDir, c.TLSCert)
-	}
 
-	if !filepath.IsAbs(c.TLSKey) {
-		c.TLSKey = filepath.Join(BinDir, c.TLSKey)
-	}
+func setDefault(){
+	viper.SetDefault("tls",false)
+	viper.SetDefault("domain","localhost")
+	viper.SetDefault("port",8080)
+	viper.SetDefault("logdir","/tmp/log")
+	viper.SetDefault("data","/tmp/data")
 
-	if !filepath.IsAbs(c.LogDir) {
-		c.LogDir = filepath.Join(BinDir, c.LogDir)
-	}
+	viper.SetDefault("database.host","127.0.0.1")
+	viper.SetDefault("database.port",5432)
+	viper.SetDefault("database.user","postgres")
+	viper.SetDefault("database.sslmode","disable")
 
-	if !filepath.IsAbs(c.Data) {
-		c.Data = filepath.Join(BinDir, c.Data)
-	}
+	viper.SetDefault("redis.host","127.0.0.1")
+	viper.SetDefault("redis.port",6379)
+	viper.SetDefault("redis.num",0)
+	viper.SetDefault("redis.maxconn",1000)
 
-	err := os.MkdirAll(c.LogDir, 0777)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll(c.Data, 0777)
-	if err != nil {
-		log.Fatal(err)
-	}
+	viper.SetDefault("smtpserver.port",25)
 }
 
 func getExecDir() string {
