@@ -1,24 +1,22 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"daemonw/api"
-	"os"
-	"os/signal"
-	"time"
 	"context"
-	"strconv"
+	"crypto/tls"
+	"daemonw/api"
 	"daemonw/conf"
-	"path/filepath"
+	"daemonw/dao"
 	"daemonw/xlog"
 	"golang.org/x/crypto/acme/autocert"
-	"crypto/tls"
-	"daemonw/db"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"strconv"
 	"syscall"
-	"daemonw/dao"
+	"time"
 )
-
 
 func main() {
 	err := conf.ParseConfig("")
@@ -26,11 +24,11 @@ func main() {
 		log.Fatal(err)
 	}
 	xlog.InitLog()
-	err = db.InitRedis()
-	if err!=nil{
+	err = dao.InitRedis()
+	if err != nil {
 		log.Fatal(err)
 	}
-	err = db.InitDB()
+	err = dao.InitDB()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,12 +91,18 @@ func listenShutdownSignal(srv *http.Server) {
 }
 
 func closeDBConn() {
-	if db.GetDB() != nil {
+	if dao.DB() != nil {
 		xlog.Info().Msg("close database connection")
-		db.GetDB().Close()
+		fatalErr(dao.DB().Close())
 	}
-	if db.GetRedis() != nil {
+	if dao.Redis() != nil {
 		xlog.Info().Msg("close redis connection")
-		db.GetRedis().Close()
+		fatalErr(dao.Redis().Close())
+	}
+}
+
+func fatalErr(err error) {
+	if err != nil {
+		log.Fatal(err)
 	}
 }

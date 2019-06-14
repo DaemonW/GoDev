@@ -1,11 +1,11 @@
 package xlog
 
 import (
+	"log"
 	"os"
 	"path/filepath"
-	"time"
 	"sync"
-	log "log"
+	"time"
 )
 
 const (

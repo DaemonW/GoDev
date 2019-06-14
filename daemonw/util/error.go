@@ -1,7 +1,7 @@
 package util
 
 import (
-	log "log"
+	"log"
 	"runtime/debug"
 )
 
@@ -19,8 +19,8 @@ func PrintStackTrace() {
 	debug.PrintStack()
 }
 
-func PanicIfErr(err error){
-	if err!=nil{
+func PanicIfErr(err error) {
+	if err != nil {
 		panic(err)
 	}
 }

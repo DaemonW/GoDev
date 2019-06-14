@@ -5,18 +5,17 @@ import (
 	"net/http"
 	"strconv"
 
+	"crypto/tls"
+	"daemonw/conf"
 	"daemonw/dao"
-	"daemonw/xlog"
 	. "daemonw/model"
 	"daemonw/util"
+	"daemonw/xlog"
+	"fmt"
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"gopkg.in/gomail.v2"
-	"crypto/tls"
-	"daemonw/conf"
-	"daemonw/db"
-	"fmt"
 	"time"
 )
 
@@ -89,7 +88,7 @@ func ActiveUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
 		return
 	}
-	request_code := db.GetRedis().Get("verify_code:active" + id).String()
+	request_code := dao.Redis().Get("verify_code:active" + id).String()
 	if request_code != code {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
 		return
@@ -103,8 +102,8 @@ func ActiveUser(c *gin.Context) {
 }
 
 func SendActiveMail(c *gin.Context) {
-	email:=c.Query("email")
-	if email==""{
+	email := c.Query("email")
+	if email == "" {
 
 	}
 }
@@ -126,7 +125,7 @@ func sendMail(user *User) error {
 func genActiveUrl(user *User) string {
 	key := fmt.Sprintf("verify_code:active:%d", user.ID)
 	code := util.RandomNum(16)
-	err := db.GetRedis().SetXX(key, code, time.Minute*10).Err()
+	err := dao.Redis().SetXX(key, code, time.Minute*10).Err()
 	if err != nil {
 		panic(err)
 	}

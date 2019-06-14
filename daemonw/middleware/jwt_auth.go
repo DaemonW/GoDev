@@ -4,14 +4,13 @@ import (
 	"errors"
 	"net/http"
 
+	"daemonw/dao"
+	myerr "daemonw/errors"
+	"daemonw/model"
+	"daemonw/xlog"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"daemonw/dao"
-	"daemonw/model"
-	"daemonw/db"
-	myerr "daemonw/errors"
 	"strconv"
-	"daemonw/xlog"
 )
 
 func JwtAuth() gin.HandlerFunc {
@@ -53,7 +52,7 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 			return nil, errors.New("invalid token format")
 		}
 		//get cached pass
-		result, err := db.GetRedis().Get("token_secret:" + claims.Id).Result()
+		result, err := dao.Redis().Get("token_secret:" + claims.Id).Result()
 		//if cached, verified
 		if err == nil {
 			pass = result
@@ -70,7 +69,7 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 		if user == nil {
 			return nil, errors.New("invalid token")
 		}
-		db.GetRedis().Set("token_secret:"+claims.Id, user.Password, 0)
+		dao.Redis().Set("token_secret:"+claims.Id, user.Password, 0)
 		return []byte(user.Password), nil
 	})
 	return token, err

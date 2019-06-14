@@ -1,12 +1,12 @@
 package xlog
 
 import (
-	"time"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
-	"fmt"
-	log "log"
+	"time"
 )
 
 type ChanWriter struct {

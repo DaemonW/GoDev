@@ -1,12 +1,12 @@
 package xlog
 
 import (
+	"context"
 	"daemonw/conf"
 	"github.com/rs/zerolog"
+	"io"
 	"os"
 	"path/filepath"
-	"io"
-	"context"
 )
 
 const (

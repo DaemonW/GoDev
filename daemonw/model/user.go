@@ -1,8 +1,8 @@
 package model
 
 import (
-	"daemonw/util"
 	"crypto/md5"
+	"daemonw/util"
 	"fmt"
 	"time"
 )

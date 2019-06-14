@@ -1,16 +1,16 @@
 package controller
 
 import (
+	"daemonw/dao"
 	myerr "daemonw/errors"
-	"github.com/gin-gonic/gin"
-	"daemonw/util"
-	"daemonw/db"
-	"time"
-	"net/http"
 	"daemonw/model"
+	"daemonw/util"
 	"daemonw/xlog"
-	"strings"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
+	"time"
 )
 
 var (
@@ -25,8 +25,8 @@ func GetVerifyCode(c *gin.Context) {
 		return
 	}
 	code := util.RandomNum(8)
-	request_key := fmt.Sprintf("verify_code:%s:%d", scope, uid)
-	err := db.GetRedis().Set(request_key, code, time.Minute*10).Err()
+	requestKey := fmt.Sprintf("verify_code:%s:%d", scope, uid)
+	err := dao.Redis().Set(requestKey, code, time.Minute*10).Err()
 	if err != nil {
 		xlog.Error().Err(err).Msg("generate verify code failed")
 		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)

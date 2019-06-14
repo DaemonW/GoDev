@@ -3,11 +3,10 @@ package controller
 import (
 	"crypto/md5"
 	"daemonw/dao"
-	"daemonw/db"
 	myerr "daemonw/errors"
-	"daemonw/xlog"
 	. "daemonw/model"
 	"daemonw/util"
+	"daemonw/xlog"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -56,7 +55,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		c.Writer.Header().Set("auth", token)
-		db.GetRedis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
+		dao.Redis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			NewResp().
 				AddResult("msg", "login success").

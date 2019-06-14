@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/koding/multiconfig"
+	"log"
 	"os/exec"
-	log "log"
 )
 
 //default params for config, perfer to load value from the file named "local.conf", the value is json style

@@ -1,8 +1,8 @@
 package util
 
 import (
-	"gopkg.in/gomail.v2"
 	"errors"
+	"gopkg.in/gomail.v2"
 )
 
 type MailMessage struct {

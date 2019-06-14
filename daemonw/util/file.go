@@ -39,10 +39,10 @@ func ListFiles(dir string) []string {
 	if infoList == nil {
 		return nil
 	}
-	size:=len(infoList)
+	size := len(infoList)
 	subFiles := make([]string, size)
-	for i:=0;i<size;i++ {
-		subFiles[i] = dir+string(filepath.Separator)+infoList[i].Name()
+	for i := 0; i < size; i++ {
+		subFiles[i] = dir + string(filepath.Separator) + infoList[i].Name()
 	}
 	return subFiles
 }
@@ -56,10 +56,10 @@ func ListExtFiles(dir string, ext string) []string {
 	if infoList == nil {
 		return nil
 	}
-	size:=len(infoList)
+	size := len(infoList)
 	subFiles := make([]string, size)
-	for i:=0;i<size;i++ {
-		subFiles[i] = dir+string(filepath.Separator)+infoList[i].Name()
+	for i := 0; i < size; i++ {
+		subFiles[i] = dir + string(filepath.Separator) + infoList[i].Name()
 	}
 	return subFiles
 }

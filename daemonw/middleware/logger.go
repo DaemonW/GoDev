@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"time"
-	"github.com/gin-gonic/gin"
 	"daemonw/xlog"
+	"github.com/gin-gonic/gin"
+	"time"
 )
 
 // By default gin.DefaultWriter = os.Stdout.
@@ -29,7 +29,7 @@ func LoggerWithWriter(ignore ...string) gin.HandlerFunc {
 		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
-		method:=c.Request.Method
+		method := c.Request.Method
 		// Process request
 		c.Next()
 
@@ -44,7 +44,7 @@ func LoggerWithWriter(ignore ...string) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 			comment := c.Errors.ByType(gin.ErrorTypePrivate).String()
-			xlog.Debug().Msgf("%s    %d    %v    %s    %s    %s    %s",
+			xlog.Debug().Str("logType","HTTP").Msgf("%s    %d    %v    %s    %s    %s    %s",
 				end.Format("2006/01/02 - 15:04:05"),
 				statusCode,
 				latency,

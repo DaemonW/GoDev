@@ -1,6 +1,7 @@
 *~
 .idea
 .git
+.vscode
 /pkg
 /bin
 /src/*/vendor

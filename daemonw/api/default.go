@@ -1,7 +1,6 @@
 package api
 
 import (
-	"daemonw/conf"
 	"daemonw/controller"
 	"daemonw/middleware"
 	"github.com/gin-gonic/gin"
@@ -26,13 +25,6 @@ func newEngine() *gin.Engine {
 func GetRouter() *gin.Engine {
 	initRouter()
 	return router
-}
-
-func initStaticRouter() {
-	binDir := conf.BinDir
-	router.StaticFile("/", binDir+"/static/html/index.html")
-	router.Static("/static/", binDir+"/static")
-	router.StaticFile("/user/", binDir+"/static/html/user.html")
 }
 
 func initUserRouter() {

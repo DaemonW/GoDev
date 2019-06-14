@@ -1,9 +1,9 @@
 package util
 
 import (
-	"strings"
-	"net/http"
 	"net"
+	"net/http"
+	"strings"
 )
 
 func GetRequestIP(r *http.Request, isForwarded bool) string {
