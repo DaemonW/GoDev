@@ -7,10 +7,10 @@ enc = "utf8"
 tls = false
 
 ### ssl public certificate
-tls_cert = "./certs/server.pem"
+tlsCert = "./certs/server.pem"
 
 ### ssl private key
-tls_key = "./certs/server.key"
+tlsKey = "./certs/server.key"
 
 ### domain name of the service endpoint
 domain = "example.com"
@@ -22,7 +22,7 @@ port = 8080
 data = "/tmp/data"
 
 ### dir to storage log files
-log_dir = "/tmp/log"
+logDir = "/tmp/log"
 
 ### database config
 [database]
@@ -46,7 +46,7 @@ password = "a123456"
 
 ### ssl-mode to connect
 
-ssl_mode = "disable"
+sslMode = "disable"
 
 ### cache config, default use  redis cache
 [redis]
@@ -66,10 +66,10 @@ password = ""
 num=0
 
 ### max client connection
-max_conn = 3000
+maxConn = 3000
 
 ### enterprise email account
-[smtp_server]
+[smtpServer]
 
 account = "example@163.com"
 
