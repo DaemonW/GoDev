@@ -7,10 +7,10 @@ enc = "utf8"
 tls = false
 
 ### ssl public certificate
-tlsCert = "./certs/server.pem"
+tlsCert = ""
 
 ### ssl private key
-tlsKey = "./certs/server.key"
+tlsKey = ""
 
 ### domain name of the service endpoint
 domain = "example.com"

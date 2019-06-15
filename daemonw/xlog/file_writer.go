@@ -1,6 +1,7 @@
 package xlog
 
 import (
+	"daemonw/util"
 	"log"
 	"os"
 	"path/filepath"
@@ -40,10 +41,13 @@ func (writer *fileWriter) Write(p []byte) (n int, err error) {
 }
 
 func (writer *fileWriter) next() {
-	writer.f.Sync()
-	writer.f.Close()
+	err := writer.f.Sync()
+	util.PanicIfErr(err)
+	err = writer.f.Close()
+	util.PanicIfErr(err)
 	dir := filepath.Dir(writer.filePath)
-	os.Rename(writer.filePath, dir+string(filepath.Separator)+writer.time.Format("2006-01-02_15:04:05")+".log")
+	err=os.Rename(writer.filePath, dir+string(filepath.Separator)+writer.time.Format("2006-01-02_15:04:05")+".log")
+	util.PanicIfErr(err)
 	writer.output(writer.filePath)
 }
 

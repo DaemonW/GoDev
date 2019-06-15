@@ -22,11 +22,7 @@ import (
 func GetUser(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("user_id"), 10, 64)
 	user, err := dao.UserDao.Get(id)
-	if err != nil {
-		xlog.Error().Err(err).Msg("db error")
-		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
-		return
-	}
+	util.PanicIfErr(err)
 	if user == nil {
 		c.JSON(http.StatusBadRequest, NewRespErr(myerr.QueryUser, myerr.MsgUserNotExist))
 		return
@@ -62,11 +58,7 @@ func CreateUser(c *gin.Context) {
 	}
 	user := NewUser(registerUser.Username, registerUser.Password)
 	qUser, err := dao.UserDao.GetByName(registerUser.Username)
-	if err != nil {
-		xlog.Error().Msgf(err.Error())
-		c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
-		return
-	}
+	util.PanicIfErr(err)
 	if qUser != nil {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.CreateUser, myerr.MsgUserExist))
 		return
@@ -95,9 +87,7 @@ func ActiveUser(c *gin.Context) {
 	}
 	uid, _ := strconv.ParseInt(id, 10, 64)
 	err := dao.UserDao.ActiveUser(uid)
-	if err != nil {
-		panic(err)
-	}
+	util.PanicIfErr(err)
 	c.JSON(http.StatusOK, NewResp().AddResult("msg", "user is active"))
 }
 
@@ -118,7 +108,7 @@ func sendMail(user *User) error {
 	//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 	m.SetHeader("Subject", "Hello!")
 	m.SetBody("text/html", genActiveUrl(user))
-	m.Attach("/home/daemonw/Pictures/1531905129160.jpg")
+	//m.Attach("/home/daemonw/test.jpg")
 	return d.DialAndSend(m)
 }
 

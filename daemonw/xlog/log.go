@@ -22,9 +22,9 @@ func InitLog() {
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	var writer io.Writer
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-	logDir := conf.Config.LogDir + string(filepath.Separator) + defaultFileName
+	logFile := conf.Config.LogDir + string(filepath.Separator) + defaultFileName
 	if (enableFileLog) {
-		fileWriter := NewFileWriter(logDir, defaultLogMaxSize)
+		fileWriter := NewFileWriter(logFile, defaultLogMaxSize)
 		writer = io.MultiWriter(consoleWriter, fileWriter)
 	} else {
 		writer = io.MultiWriter(consoleWriter)

@@ -2,10 +2,9 @@
 package conf
 
 import (
-	"os"
-
 	"github.com/spf13/viper"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -56,7 +55,7 @@ func InitConfig() {
 	viper.SetConfigName(ConfigName)             // name of config file (without extension)
 	viper.AddConfigPath("/etc/" + ServerName)   // path to look for the config file in
 	viper.AddConfigPath("$HOME/." + ServerName) // call multiple times to add many search paths
-	viper.AddConfigPath(getExecDir()) // call multiple times to add many search paths
+	viper.AddConfigPath(getExecDir())           // call multiple times to add many search paths
 	viper.AddConfigPath(".")                    // optionally look for config in the working directory
 	viper.SetConfigType("toml")
 
@@ -71,6 +70,7 @@ func InitConfig() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = os.MkdirAll(Config.LogDir, 0666)
 	if err != nil {
 		panic(err)
@@ -81,25 +81,24 @@ func InitConfig() {
 	}
 }
 
+func setDefault() {
+	viper.SetDefault("tls", false)
+	viper.SetDefault("domain", "localhost")
+	viper.SetDefault("port", 8080)
+	viper.SetDefault("logdir", "/tmp/log")
+	viper.SetDefault("data", "/tmp/data")
 
-func setDefault(){
-	viper.SetDefault("tls",false)
-	viper.SetDefault("domain","localhost")
-	viper.SetDefault("port",8080)
-	viper.SetDefault("logdir","/tmp/log")
-	viper.SetDefault("data","/tmp/data")
+	viper.SetDefault("database.host", "127.0.0.1")
+	viper.SetDefault("database.port", 5432)
+	viper.SetDefault("database.user", "postgres")
+	viper.SetDefault("database.sslmode", "disable")
 
-	viper.SetDefault("database.host","127.0.0.1")
-	viper.SetDefault("database.port",5432)
-	viper.SetDefault("database.user","postgres")
-	viper.SetDefault("database.sslmode","disable")
+	viper.SetDefault("redis.host", "127.0.0.1")
+	viper.SetDefault("redis.port", 6379)
+	viper.SetDefault("redis.num", 0)
+	viper.SetDefault("redis.maxconn", 1000)
 
-	viper.SetDefault("redis.host","127.0.0.1")
-	viper.SetDefault("redis.port",6379)
-	viper.SetDefault("redis.num",0)
-	viper.SetDefault("redis.maxconn",1000)
-
-	viper.SetDefault("smtpserver.port",25)
+	viper.SetDefault("smtpserver.port", 25)
 }
 
 func getExecDir() string {
