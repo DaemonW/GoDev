@@ -22,7 +22,7 @@ func ListFilesInfo(dir string) []os.FileInfo {
 	if err != nil {
 		return nil
 	}
-	defer file.Close()
+	defer PanicIfErr(file.Close())
 	infoList, err := file.Readdir(0)
 	if err != nil {
 		return nil

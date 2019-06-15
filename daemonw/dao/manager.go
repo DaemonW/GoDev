@@ -35,7 +35,7 @@ func InitDB() error {
 	} else {
 		connParams = fmt.Sprintf(DialWithPass, c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
 	}
-	sqlx.Rebind(sqlx.DOLLAR, "?")
+	//sqlx.Rebind(sqlx.DOLLAR, "?")
 	dbConn, err = sqlx.Connect("postgres", connParams)
 	return err
 }
