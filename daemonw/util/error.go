@@ -10,7 +10,7 @@ var DEBUG bool = false
 func FatalIfErr(err error, trace bool) {
 	if err != nil {
 		log.Fatal(err)
-		if trace{
+		if trace {
 			printTrace()
 		}
 	}

@@ -15,7 +15,7 @@ func newUserDao() *userDao {
 
 func (dao *userDao) Get(id uint64) (*User, error) {
 	user := &User{}
-	err := dao.baseDao.Get(user, `SELECT * FROM users WHERE id=$1`, id)
+	err := dao.baseDao.Get(user, `SELECT * FROM users WHERE id=?`, id)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -24,7 +24,7 @@ func (dao *userDao) Get(id uint64) (*User, error) {
 
 func (dao *userDao) GetByName(username string) (*User, error) {
 	user := &User{}
-	err := dao.baseDao.Get(user, `SELECT * FROM users WHERE username=$1`, username)
+	err := dao.baseDao.Get(user, `SELECT * FROM users WHERE username=?`, username)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -33,7 +33,7 @@ func (dao *userDao) GetByName(username string) (*User, error) {
 
 func (dao *userDao) GetLikeName(username string) ([]User, error) {
 	users := []User{}
-	err := dao.baseDao.Select(&users, `SELECT * FROM users WHERE username LIKE $1`, username+"%")
+	err := dao.baseDao.Select(&users, `SELECT * FROM users WHERE username LIKE ?`, username+"%")
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -57,11 +57,11 @@ func (dao *userDao) CreateUser(user *User) error {
 }
 
 func (dao *userDao) DeleteUser(id int64) error {
-	_, err := dao.baseDao.Exec(`DELETE FROM users WHERE id=$1`, id)
+	_, err := dao.baseDao.Exec(`DELETE FROM users WHERE id=?`, id)
 	return err
 }
 
 func (dao *userDao) ActiveUser(id int64) error {
-	_, err := dao.baseDao.Exec(`UPDATE users SET status=0 WHERE id=$1`, id)
+	_, err := dao.baseDao.Exec(`UPDATE users SET status=0 WHERE id=?`, id)
 	return err
 }

@@ -98,7 +98,7 @@ func SendActiveMail(c *gin.Context) {
 	}
 }
 
-func sendMail(user *User) error {
+func sendMail(user *User) {
 	serverConf := conf.Config.SmtpServer
 	d := gomail.NewDialer(serverConf.Host, serverConf.Port, serverConf.Account, serverConf.Password)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
@@ -109,7 +109,10 @@ func sendMail(user *User) error {
 	m.SetHeader("Subject", "Hello!")
 	m.SetBody("text/html", genActiveUrl(user))
 	//m.Attach("/home/daemonw/test.jpg")
-	return d.DialAndSend(m)
+	err := d.DialAndSend(m)
+	if err != nil {
+		xlog.Error().Msgf("send email failed, user: %s, reason: %s", user.Username, err.Error())
+	}
 }
 
 func genActiveUrl(user *User) string {

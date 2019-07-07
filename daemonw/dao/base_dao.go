@@ -42,16 +42,18 @@ func (dao *baseDao) Commit() error {
 
 func (dao *baseDao) Get(obj interface{}, sqlStatement string, args ...interface{}) error {
 	if dao.enableTx {
-		return dao.tx.Get(obj, sqlStatement, args...)
+		return dao.tx.Get(obj, dao.tx.Rebind(sqlStatement), args...)
 	}
-	return dao.db.Get(obj, sqlStatement, args...)
+	dao.db.Rebind(sqlStatement)
+	return dao.db.Get(obj, dao.db.Rebind(sqlStatement), args...)
 }
 
 func (dao *baseDao) Select(obj interface{}, sqlStatement string, args ...interface{}) error {
 	if dao.enableTx {
-		return dao.tx.Select(obj, sqlStatement, args...)
+		dao.tx.Rebind(sqlStatement)
+		return dao.tx.Select(obj, dao.tx.Rebind(sqlStatement), args...)
 	}
-	return dao.db.Select(obj, sqlStatement, args...)
+	return dao.db.Select(obj, dao.db.Rebind(sqlStatement), args...)
 }
 
 func (dao *baseDao) Delete(sqlStatement string, args ...interface{}) (sql.Result, error) {
@@ -98,16 +100,16 @@ func (dao *baseDao) UpdateObj(sqlStatement string, args ...interface{}) (sql.Res
 
 func (dao *baseDao) Exec(sqlStatement string, args ...interface{}) (sql.Result, error) {
 	if dao.enableTx {
-		return dao.tx.Exec(sqlStatement, args...)
+		return dao.tx.Exec(dao.tx.Rebind(sqlStatement), args...)
 	}
-	return dao.db.Exec(sqlStatement, args...)
+	return dao.db.Exec(dao.db.Rebind(sqlStatement), args...)
 }
 
 func (dao *baseDao) NamedExec(sqlStatement string, args interface{}) (sql.Result, error) {
 	if dao.enableTx {
-		return dao.tx.NamedExec(sqlStatement, args)
+		return dao.tx.NamedExec(dao.tx.Rebind(sqlStatement), args)
 	}
-	return dao.db.NamedExec(sqlStatement, args)
+	return dao.db.NamedExec(dao.db.Rebind(sqlStatement), args)
 }
 
 func subString(Str string, s, t int) string {

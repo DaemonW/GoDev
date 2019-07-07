@@ -1,9 +1,21 @@
 create table users (
       id SERIAL primary key,
-      username text unique ,
-      password text,
+      username varchar(64) unique ,
+      password varchar(32),
       salt bytea,
-      login_ip text,
       create_at timestamp ,
       update_at timestamp
+);
+
+
+create table user_infos (
+      user_id int primary key unique,
+      nickname varchar(64) unique ,
+      sex int,
+      age int,
+      email varchar(128),
+      phone varchar(64),
+      address text,
+      ip varchar(128),
+      meta jsonb
 )

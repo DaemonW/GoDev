@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"daemonw/dao"
 	myerr "daemonw/errors"
-	. "daemonw/model"
 	"daemonw/util"
 	"daemonw/xlog"
 	"fmt"

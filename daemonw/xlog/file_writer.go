@@ -46,7 +46,7 @@ func (writer *fileWriter) next() {
 	err = writer.f.Close()
 	util.PanicIfErr(err)
 	dir := filepath.Dir(writer.filePath)
-	err=os.Rename(writer.filePath, dir+string(filepath.Separator)+writer.time.Format("2006-01-02_15:04:05")+".log")
+	err = os.Rename(writer.filePath, dir+string(filepath.Separator)+writer.time.Format("2006-01-02_15:04:05")+".log")
 	util.PanicIfErr(err)
 	writer.output(writer.filePath)
 }

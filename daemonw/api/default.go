@@ -31,7 +31,7 @@ func initUserRouter() {
 	router.GET("/api/user/:user_id", controller.GetUser)
 	router.POST("/api/users", controller.CreateUser)
 	router.POST("/api/user/auth/token", controller.Login)
-	router.POST("/api/user/auth/active", controller.Login)
+	router.POST("/api/user/auth/active", controller.ActiveUser)
 	router.PUT("/api/user/:user_id", controller.ActiveUser)
 	router.GET("/api/users", controller.GetUsers)
 

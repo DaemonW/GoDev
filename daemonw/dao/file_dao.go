@@ -1,7 +1,5 @@
 package dao
 
-import . "daemonw/model"
-
 type fileDao struct {
 	*baseDao
 }
@@ -16,7 +14,6 @@ func (dao *fileDao) AddFile(f File) error {
 	_, err := dao.CreateObj(smt, f)
 	return err
 }
-
 
 func (dao *fileDao) DeleteFile(pid uint64, name string) error {
 	smt := `DELETE FROM files where name=':name' AND parent_id=':parent_id'`

@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// By default gin.DefaultWriter = os.Stdout.
 func Logger() gin.HandlerFunc {
 	return LoggerWithWriter()
 }
@@ -44,15 +43,16 @@ func LoggerWithWriter(ignore ...string) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 			comment := c.Errors.ByType(gin.ErrorTypePrivate).String()
-			xlog.Debug().Str("logType","HTTP").Msgf("%s    %d    %v    %s    %s    %s    %s",
-				end.Format("2006/01/02 - 15:04:05"),
-				statusCode,
-				latency,
-				clientIP,
-				method,
-				path,
-				comment,
-			)
+			xlog.Debug().Str("scope", "http_router").
+				Msgf("%s    %d    %10v    %s    %s    %s    %s",
+					end.Format("2006/01/02 - 15:04:05"),
+					statusCode,
+					latency,
+					clientIP,
+					method,
+					path,
+					comment,
+				)
 		}
 	}
 }
