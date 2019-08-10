@@ -2,11 +2,12 @@
 package conf
 
 import (
+	"daemonw/util"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 )
 
 //default params for config, perfer to load value from the file named "local.conf", the value is json style
@@ -20,7 +21,7 @@ type config struct {
 	Data       string //dir to store the data
 	Database   database
 	Redis      redis
-	SmtpServer smtpServer
+	SMTPServer smtpServer
 }
 
 // Postgres is here for embedded struct feature
@@ -36,7 +37,7 @@ type database struct {
 type redis struct {
 	Host     string
 	Port     int
-	Num      int
+	Index    int
 	Password string
 	MaxConn  int
 }
@@ -62,67 +63,52 @@ func InitConfig() {
 	setDefault()
 
 	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {
-		log.Fatal(err)
-	}
+	util.PanicIfErr(err)
 	Config = &config{}
 	err = viper.Unmarshal(Config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = os.MkdirAll(Config.LogDir, 0666)
-	if err != nil {
-		panic(err)
-	}
-	err = os.MkdirAll(Config.Data, 0666)
-	if err != nil {
-		panic(err)
-	}
+	util.PanicIfErr(err)
+	mask := syscall.Umask(0)
+	err = os.MkdirAll(Config.LogDir, 0777)
+	util.PanicIfErr(err)
+	err = os.MkdirAll(Config.Data, 0777)
+	util.PanicIfErr(err)
+	syscall.Umask(mask)
 }
 
 func setDefault() {
 	viper.SetDefault("tls", false)
 	viper.SetDefault("domain", "localhost")
 	viper.SetDefault("port", 8080)
-	viper.SetDefault("logdir", "/tmp/log")
+	viper.SetDefault("logDir", "/tmp/log")
 	viper.SetDefault("data", "/tmp/data")
 
 	viper.SetDefault("database.host", "127.0.0.1")
 	viper.SetDefault("database.port", 5432)
 	viper.SetDefault("database.user", "postgres")
-	viper.SetDefault("database.sslmode", "disable")
+	viper.SetDefault("database.sslMode", "disable")
 
 	viper.SetDefault("redis.host", "127.0.0.1")
 	viper.SetDefault("redis.port", 6379)
-	viper.SetDefault("redis.num", 0)
-	viper.SetDefault("redis.maxconn", 1000)
+	viper.SetDefault("redis.index", 0)
+	viper.SetDefault("redis.maxConn", 1000)
 
-	viper.SetDefault("smtpserver.port", 25)
+	viper.SetDefault("smtpServer.port", 25)
 }
 
 func getExecDir() string {
 	execPath, err := exec.LookPath(os.Args[0])
-	if err != nil {
-		log.Fatal(err)
-	}
+	util.PanicIfErr(err)
 	//    Is Symlink
 	fi, err := os.Lstat(execPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	util.PanicIfErr(err)
 	if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
 		execPath, err = os.Readlink(execPath)
-		if err != nil {
-			log.Fatal(err)
-		}
+		util.PanicIfErr(err)
 	}
 	execDir := filepath.Dir(execPath)
 	if execDir == "." {
 		execDir, err = os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
+		util.PanicIfErr(err)
 	}
 	return execDir
 }

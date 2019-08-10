@@ -1,14 +1,14 @@
 package controller
 
 import (
-	myerr "daemonw/errors"
+	"daemonw/xerr"
 	"net/http"
 	"strconv"
 
 	"crypto/tls"
 	"daemonw/conf"
 	"daemonw/dao"
-	. "daemonw/model"
+	. "daemonw/entity"
 	"daemonw/util"
 	"daemonw/xlog"
 	"fmt"
@@ -24,7 +24,7 @@ func GetUser(c *gin.Context) {
 	user, err := dao.UserDao.Get(id)
 	util.PanicIfErr(err)
 	if user == nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.QueryUser, myerr.MsgUserNotExist))
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeQueryUser, xerr.MsgUserNotExist))
 		return
 	}
 	c.JSON(http.StatusOK, NewResp().AddResult("user", user))
@@ -48,24 +48,24 @@ func CreateUser(c *gin.Context) {
 		Password string `json:"password" valid:"printableascii,length(8|16)"`
 	}
 	if err = c.ShouldBindWith(&registerUser, binding.JSON); err != nil {
-		c.JSON(http.StatusNotAcceptable, NewRespErr(myerr.CreateUser, myerr.MsgBadParam))
+		c.JSON(http.StatusNotAcceptable, NewRespErr(xerr.CodeCreateUser, xerr.MsgBadParam))
 		return
 	}
 	_, err = govalidator.ValidateStruct(registerUser)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser, myerr.MsgBadParam))
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeCreateUser, xerr.MsgBadParam))
 		return
 	}
 	user := NewUser(registerUser.Username, registerUser.Password)
 	qUser, err := dao.UserDao.GetByName(registerUser.Username)
 	util.PanicIfErr(err)
 	if qUser != nil {
-		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.CreateUser, myerr.MsgUserExist))
+		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeCreateUser, xerr.MsgUserExist))
 		return
 	}
 	if err = dao.UserDao.CreateUser(user); err != nil {
 		xlog.Error().Msgf(err.Error())
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.CreateUser, myerr.MsgCreateUserFail))
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeCreateUser, xerr.MsgCreateUserFail))
 	} else {
 		go sendMail(user)
 		resp := NewResp().AddResult("msg", "create user success")
@@ -77,17 +77,20 @@ func ActiveUser(c *gin.Context) {
 	id := c.Param("id")
 	code := c.Query("code")
 	if id == "" || code == "" {
-		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
+		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeLogin, xerr.MsgActiveUserFail))
 		return
 	}
 	request_code := dao.Redis().Get("verify_code:active" + id).String()
 	if request_code != code {
-		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(myerr.Login, myerr.MsgActiveUserFail))
+		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeLogin, xerr.MsgActiveUserFail))
 		return
 	}
 	uid, _ := strconv.ParseInt(id, 10, 64)
 	err := dao.UserDao.ActiveUser(uid)
-	util.PanicIfErr(err)
+	if err!=nil{
+		c.JSON(http.StatusInternalServerError, NewResp().WithErrMsg(xerr.CodeInternal, xerr.MsgInternal))
+		return
+	}
 	c.JSON(http.StatusOK, NewResp().AddResult("msg", "user is active"))
 }
 
@@ -99,7 +102,7 @@ func SendActiveMail(c *gin.Context) {
 }
 
 func sendMail(user *User) {
-	serverConf := conf.Config.SmtpServer
+	serverConf := conf.Config.SMTPServer
 	d := gomail.NewDialer(serverConf.Host, serverConf.Port, serverConf.Account, serverConf.Password)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	m := gomail.NewMessage()

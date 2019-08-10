@@ -2,7 +2,6 @@ package xlog
 
 import (
 	"daemonw/util"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -66,7 +65,7 @@ func (writer *fileWriter) output(filePath string) {
 		//writer.f.Seek(writer.size, 0)
 	}
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	writer.f = file
 }

@@ -8,7 +8,6 @@ import (
 	"daemonw/dao"
 	"daemonw/util"
 	"daemonw/xlog"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,16 +19,10 @@ import (
 func main() {
 	conf.InitConfig()
 	xlog.InitLog()
-	err := dao.InitRedis()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = dao.InitDB()
-	if err != nil {
-		log.Fatal(err)
-	}
+	dao.InitRedis()
+	dao.InitDB()
 	dao.InitDaoManager()
-	defer closeDBConn()
+	defer closeDataSourceConn()
 
 	cfg := conf.Config
 	router := api.GetRouter()
@@ -41,6 +34,7 @@ func main() {
 		TLSConfig: tlsConf,
 	}
 	go func() {
+		var err error
 		if !cfg.TLS {
 			xlog.Info().Msgf("start http server on %d", cfg.Port)
 			err = srv.ListenAndServe()
@@ -77,7 +71,7 @@ func listenShutdownSignal(srv *http.Server) {
 	}
 }
 
-func closeDBConn() {
+func closeDataSourceConn() {
 	if dao.DB() != nil {
 		xlog.Info().Msg("close database connection")
 		util.FatalIfErr(dao.DB().Close(), false)

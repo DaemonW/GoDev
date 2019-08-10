@@ -1,5 +1,7 @@
 package dao
 
+import . "daemonw/entity"
+
 type fileDao struct {
 	*baseDao
 }

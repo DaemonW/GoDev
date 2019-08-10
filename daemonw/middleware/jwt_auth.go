@@ -5,9 +5,8 @@ import (
 	"net/http"
 
 	"daemonw/dao"
-	myerr "daemonw/errors"
-	"daemonw/model"
-	"daemonw/xlog"
+	"daemonw/entity"
+	"daemonw/xerr"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -15,27 +14,25 @@ import (
 
 func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		defer func() {
-			if err := recover(); err != nil {
-				xlog.Error().Err(err.(error)).Msg("verify token")
-				c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
-				c.Abort()
-			}
-		}()
 		tokenStr := c.Request.Header.Get("auth")
 		if tokenStr == "" {
-			c.JSON(http.StatusUnauthorized, model.NewRespErr(myerr.Auth, "invalid token"))
+			c.JSON(http.StatusUnauthorized, entity.NewRespErr(xerr.CodeAuth, "invalid token"))
 			c.Abort()
 			return
 		}
 		token, err := verifyToken(tokenStr)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, model.NewRespErr(myerr.Auth, err.Error()))
+			c.JSON(http.StatusUnauthorized, entity.NewRespErr(xerr.CodeAuth, err.Error()))
 			c.Abort()
 			return
 		}
-		params := token.Claims.(*model.Claims)
-		uid, _ := strconv.ParseUint(params.Id, 10, 64)
+		params := token.Claims.(*entity.Claims)
+		uid, err:= strconv.ParseUint(params.Id, 10, 64)
+		if err!=nil{
+			c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeAuth, err.Error()))
+			c.Abort()
+			return
+		}
 		c.Set("uid", uid)
 		c.Set("user", params.Audience)
 		c.Next()
@@ -44,10 +41,10 @@ func JwtAuth() gin.HandlerFunc {
 
 func verifyToken(tokenStr string) (*jwt.Token, error) {
 	var pass string
-	var claims model.Claims
+	var claims entity.Claims
 	//check token
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
-		claims, ok := token.Claims.(*model.Claims)
+		claims, ok := token.Claims.(*entity.Claims)
 		if !ok {
 			return nil, errors.New("invalid token format")
 		}

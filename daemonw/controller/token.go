@@ -3,8 +3,9 @@ package controller
 import (
 	"crypto/md5"
 	"daemonw/dao"
-	myerr "daemonw/errors"
+	. "daemonw/entity"
 	"daemonw/util"
+	"daemonw/xerr"
 	"daemonw/xlog"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -21,24 +22,27 @@ func Login(c *gin.Context) {
 		Password string `json:"password" form:"password"`
 	}
 	if err := c.ShouldBindWith(&loginUser, binding.JSON); err != nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, err.Error()))
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, err.Error()))
 		return
 	}
 
 	u, err := dao.UserDao.GetByName(loginUser.Username)
-	util.PanicIfErr(err)
+	if err!=nil{
+		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+		return
+	}
 	if u == nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, myerr.MsgUserNotExist))
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, xerr.MsgUserNotExist))
 		return
 	}
 
-	if u.Status == STATUS_UNACTIVE {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, "account is not active"))
+	if u.Status == StatusUserInactive {
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, xerr.MsgUserNotActive))
 		return
 	}
 
-	if u.Status == STATUS_FREEZE {
-		c.JSON(http.StatusBadRequest, NewRespErr(myerr.Login, "account is frozen"))
+	if u.Status == StatusUserFreeze {
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, xerr.MsgFreezeUser))
 		return
 	}
 
@@ -50,7 +54,7 @@ func Login(c *gin.Context) {
 		token, err := genJwtToken(u, ip)
 		if err != nil {
 			xlog.Error().Err(err).Msg("generate token failed")
-			c.JSON(http.StatusInternalServerError, myerr.ErrInternalServer)
+			c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 			return
 		}
 		c.Writer.Header().Set("auth", token)
@@ -61,7 +65,7 @@ func Login(c *gin.Context) {
 				AddResult("user", u).
 				AddResult("token", token))
 	} else {
-		c.JSON(http.StatusUnauthorized, NewRespErr(myerr.Login, myerr.MsgIncorrectAuth))
+		c.JSON(http.StatusUnauthorized, NewRespErr(xerr.CodeLogin, xerr.MsgIncorrectAuth))
 	}
 }
 

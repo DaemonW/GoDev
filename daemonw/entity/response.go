@@ -1,12 +1,12 @@
-package model
+package entity
 
-import "daemonw/errors"
+import "daemonw/xerr"
 
 type Content map[string]interface{}
 
 type Response struct {
-	Result Content        `json:"result,omitempty"`
-	Err    *errors.ErrMsg `json:"err,omitempty"`
+	Result Content      `json:"result,omitempty"`
+	Err    *xerr.ErrMsg `json:"err,omitempty"`
 }
 
 func NewResp() *Response {
@@ -16,7 +16,7 @@ func NewResp() *Response {
 
 func NewRespErr(errCode int, errMsg string) *Response {
 	resp := &Response{}
-	resp.Err = &errors.ErrMsg{errCode, errMsg}
+	resp.Err = &xerr.ErrMsg{errCode, errMsg}
 	return resp
 }
 
@@ -30,14 +30,14 @@ func (r *Response) AddResult(key string, val interface{}) *Response {
 
 func (r *Response) WithErrMsg(errCode int, errMsg string) *Response {
 	if r.Err == nil {
-		r.Err = &errors.ErrMsg{}
+		r.Err = &xerr.ErrMsg{}
 	}
 	r.Err.Code = errCode;
 	r.Err.Msg = errMsg
 	return r
 }
 
-func (r *Response) SetError(err *errors.ErrMsg) *Response {
+func (r *Response) SetError(err *xerr.ErrMsg) *Response {
 	r.Err = err
 	return r
 }

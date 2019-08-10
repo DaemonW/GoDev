@@ -5,8 +5,6 @@ import (
 	"runtime/debug"
 )
 
-var DEBUG bool = false
-
 func FatalIfErr(err error, trace bool) {
 	if err != nil {
 		log.Fatal(err)

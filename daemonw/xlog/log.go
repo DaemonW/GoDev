@@ -9,10 +9,6 @@ import (
 	"path/filepath"
 )
 
-const (
-	enableFileLog = true
-)
-
 var (
 	Logger zerolog.Logger
 )
@@ -23,7 +19,7 @@ func InitLog() {
 	var writer io.Writer
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
 	logFile := conf.Config.LogDir + string(filepath.Separator) + defaultFileName
-	if (enableFileLog) {
+	if (conf.FileLog) {
 		fileWriter := NewFileWriter(logFile, defaultLogMaxSize)
 		writer = io.MultiWriter(consoleWriter, fileWriter)
 	} else {

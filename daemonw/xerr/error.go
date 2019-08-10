@@ -1,10 +1,6 @@
-package errors
+package xerr
 
 import "fmt"
-
-var (
-	ErrInternalServer = &ErrMsg{Internal, MsgInternal,}
-)
 
 type ErrMsg struct {
 	Code int    `json:"code,omitempty"`

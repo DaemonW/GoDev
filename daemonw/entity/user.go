@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"crypto/md5"
@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	STATUS_UNACTIVE = iota
-	STATUS_NORMAL
-	STATUS_FREEZE
+	StatusUserInactive = 0x01 << iota
+	StatusUserNormal
+	StatusUserFreeze
 )
 
 type User struct {

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"daemonw/conf"
+	"daemonw/util"
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
@@ -25,7 +26,7 @@ var (
 	rsConn *redis.Client
 )
 
-func InitDB() error {
+func InitDB() {
 	var err error
 	c := &conf.Config.Database
 	//connStr := "postgres://postgres:a123456@localhost:5432/mydb?sslmode=disable"
@@ -36,23 +37,20 @@ func InitDB() error {
 		connParams = fmt.Sprintf(DialWithPass, c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
 	}
 	dbConn, err = sqlx.Connect("postgres", connParams)
-	if err != nil {
-		return err
-	}
-	return nil
+	util.PanicIfErr(err)
 }
 
-func InitRedis() error {
+func InitRedis() {
 	cfg := conf.Config.Redis
 	addr := cfg.Host + ":" + strconv.Itoa(cfg.Port)
 	clientOption := &redis.Options{
 		Addr:     addr,
 		Password: cfg.Password,
-		DB:       cfg.Num,
+		DB:       cfg.Index,
 	}
 	rsConn = redis.NewClient(clientOption)
 	_, err := rsConn.Ping().Result()
-	return err
+	util.PanicIfErr(err)
 }
 
 func DB() *sqlx.DB {

@@ -1,4 +1,4 @@
-package model
+package entity
 
 type UserInfo struct {
 	UserId   uint64 `json:"userId" db:"user_id"`

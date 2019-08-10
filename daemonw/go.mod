@@ -7,6 +7,7 @@ require (
 	github.com/go-redis/redis v0.0.0-20190503082931-75795aa4236d
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.0.0
+	github.com/pelletier/go-toml v1.2.0
 	github.com/rs/zerolog v1.14.3
 	github.com/spf13/viper v1.4.0
 	golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed // indirect

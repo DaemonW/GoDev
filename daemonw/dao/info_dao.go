@@ -1,7 +1,7 @@
 package dao
 
 import (
-	. "daemonw/model"
+	. "daemonw/entity"
 	"database/sql"
 )
 
