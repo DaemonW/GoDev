@@ -6,7 +6,7 @@ type Content map[string]interface{}
 
 type Response struct {
 	Result Content      `json:"result,omitempty"`
-	Err    *xerr.ErrMsg `json:"err,omitempty"`
+	Err    *xerr.Err `json:"err,omitempty"`
 }
 
 func NewResp() *Response {
@@ -16,7 +16,7 @@ func NewResp() *Response {
 
 func NewRespErr(errCode int, errMsg string) *Response {
 	resp := &Response{}
-	resp.Err = &xerr.ErrMsg{errCode, errMsg}
+	resp.Err = &xerr.Err{errCode, errMsg}
 	return resp
 }
 
@@ -30,14 +30,14 @@ func (r *Response) AddResult(key string, val interface{}) *Response {
 
 func (r *Response) WithErrMsg(errCode int, errMsg string) *Response {
 	if r.Err == nil {
-		r.Err = &xerr.ErrMsg{}
+		r.Err = &xerr.Err{}
 	}
 	r.Err.Code = errCode;
 	r.Err.Msg = errMsg
 	return r
 }
 
-func (r *Response) SetError(err *xerr.ErrMsg) *Response {
+func (r *Response) SetError(err *xerr.Err) *Response {
 	r.Err = err
 	return r
 }

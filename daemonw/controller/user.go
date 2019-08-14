@@ -19,17 +19,6 @@ import (
 	"time"
 )
 
-func GetUser(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("user_id"), 10, 64)
-	user, err := dao.UserDao.Get(id)
-	util.PanicIfErr(err)
-	if user == nil {
-		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeQueryUser, xerr.MsgUserNotExist))
-		return
-	}
-	c.JSON(http.StatusOK, NewResp().AddResult("user", user))
-}
-
 func GetUsers(c *gin.Context) {
 	name := c.Query("name")
 	if name == "" {
@@ -37,7 +26,28 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 	users, err := dao.UserDao.GetLikeName(name)
-	util.PanicIfErr(err)
+	if err != nil {
+		xlog.Panic().Msg(util.StackInfo())
+		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+		return
+	}
+	c.JSON(http.StatusOK, NewResp().AddResult("users", users))
+}
+
+func GetUser(c *gin.Context) {
+	_id := c.Param("id")
+	id, _ := strconv.ParseUint(_id, 10, 64);
+	if id <= 0 {
+		c.JSON(http.StatusNotFound, NewRespErr(xerr.CodeQueryUser, xerr.MsgUserNotExist))
+		return
+	}
+
+	users, err := dao.UserDao.Get(id)
+	if err != nil {
+		xlog.Panic().Msg(util.StackInfo())
+		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+		return
+	}
 	c.JSON(http.StatusOK, NewResp().AddResult("users", users))
 }
 
@@ -58,13 +68,17 @@ func CreateUser(c *gin.Context) {
 	}
 	user := NewUser(registerUser.Username, registerUser.Password)
 	qUser, err := dao.UserDao.GetByName(registerUser.Username)
-	util.PanicIfErr(err)
+	if err != nil {
+		xlog.Panic().Msg(util.StackInfo())
+		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+		return
+	}
 	if qUser != nil {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeCreateUser, xerr.MsgUserExist))
 		return
 	}
 	if err = dao.UserDao.CreateUser(user); err != nil {
-		xlog.Error().Msgf(err.Error())
+		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeCreateUser, xerr.MsgCreateUserFail))
 	} else {
 		go sendMail(user)
@@ -73,32 +87,69 @@ func CreateUser(c *gin.Context) {
 	}
 }
 
-func ActiveUser(c *gin.Context) {
-	id := c.Param("id")
-	code := c.Query("code")
-	if id == "" || code == "" {
-		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeLogin, xerr.MsgActiveUserFail))
+func UpdateUser(c *gin.Context) {
+	_status := c.Query("status")
+	if !util.IsEmpty(_status) {
+		code := c.Query("code")
+		status, _ := strconv.ParseUint(_status, 10, 8)
+		id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+		if id == 0 {
+			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeUpdateUser, xerr.MsgUserNotExist))
+			return
+		}
+
+		if util.IsEmpty(code) {
+			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeUpdateUser, xerr.MsgIllegalRequestCode))
+			return
+		}
+		u, err := dao.UserDao.Get(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+			return
+		}
+		if err1 := updateUserStatus(u, uint8(status), code);err1!=nil{
+			if err1.IsInternalErr(){
+				c.JSON(http.StatusInternalServerError, err1)
+			}else{
+				c.JSON(http.StatusBadRequest, err1)
+			}
+		}
 		return
 	}
-	request_code := dao.Redis().Get("verify_code:active" + id).String()
-	if request_code != code {
-		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeLogin, xerr.MsgActiveUserFail))
-		return
-	}
-	uid, _ := strconv.ParseInt(id, 10, 64)
-	err := dao.UserDao.ActiveUser(uid)
-	if err!=nil{
-		c.JSON(http.StatusInternalServerError, NewResp().WithErrMsg(xerr.CodeInternal, xerr.MsgInternal))
-		return
-	}
-	c.JSON(http.StatusOK, NewResp().AddResult("msg", "user is active"))
 }
 
-func SendActiveMail(c *gin.Context) {
-	email := c.Query("email")
-	if email == "" {
-
+func updateUserStatus(user *User, newStatus uint8, code string) *xerr.Err {
+	if user.Status == newStatus {
+		return nil
 	}
+
+	if user.Status == UserStatusNormal {
+		if user.Role != UserRoleAdmin {
+			return &xerr.Err{xerr.CodeUpdateUser, xerr.MsgPermissionDenied}
+		}
+	} else if user.Status == UserStatusFreeze {
+		if user.Role != UserRoleAdmin {
+			return &xerr.Err{xerr.CodeUpdateUser, xerr.MsgPermissionDenied}
+		}
+
+	} else if user.Status == UserStatusInactive {
+		if user.Role == UserRoleNormal {
+			if newStatus == UserStatusNormal {
+				requestCode := dao.Redis().Get("verify_code:active" + strconv.FormatUint(user.Id, 10)).String()
+				if requestCode != code {
+					return &xerr.Err{xerr.CodeUpdateUser, xerr.MsgIllegalRequestCode}
+				}
+			} else {
+				return &xerr.Err{xerr.CodeUpdateUser, xerr.MsgPermissionDenied}
+			}
+		}
+	}
+	err := dao.UserDao.UpdateStatus(user.Id, newStatus)
+	if err != nil {
+		xlog.Panic().Msg(util.StackInfo())
+		return &xerr.Err{xerr.CodeInternal, xerr.MsgInternal}
+	}
+	return nil
 }
 
 func sendMail(user *User) {
@@ -119,11 +170,11 @@ func sendMail(user *User) {
 }
 
 func genActiveUrl(user *User) string {
-	key := fmt.Sprintf("verify_code:active:%d", user.ID)
+	key := fmt.Sprintf("verify_code:active:%d", user.Id)
 	code := util.RandomNum(16)
 	err := dao.Redis().SetXX(key, code, time.Minute*10).Err()
 	if err != nil {
-		panic(err)
+		xlog.Panic().Msg(util.StackInfo())
 	}
-	return fmt.Sprintf("http://localhost:8080/api/user/%d?verify_code=%s", user.ID, code)
+	return fmt.Sprintf("http://%s:%d/api/user/%d?verify_code=%s",conf.Config.Domain, conf.Config.Port, user.Id, code)
 }

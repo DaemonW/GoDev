@@ -3,22 +3,25 @@ package entity
 import (
 	"crypto/md5"
 	"daemonw/util"
-	"fmt"
 	"time"
 )
 
 const (
-	StatusUserInactive = 0x01 << iota
-	StatusUserNormal
-	StatusUserFreeze
+	UserStatusInactive = iota
+	UserStatusNormal
+	UserStatusFreeze
+
+	UserRoleNormal = iota
+	UserRoleAdmin
 )
 
 type User struct {
-	ID       uint64    `json:"id" db:"id"`
-	Username string    `json:"username"`
-	Password string    `json:"-"`
-	Salt     []byte    `json:"-"`
-	Status   uint8     `json:"status"`
+	Id       uint64    `json:"id" db:"id"`
+	Username string    `json:"username" db:"username"`
+	Password string    `json:"-" db:"password"`
+	Salt     []byte    `json:"-" db:"salt"`
+	Status   uint8     `json:"status" db:"status"`
+	Role     uint8     `json:"role" db:"role"`
 	CreateAt time.Time `json:"createAt" db:"create_at"`
 	UpdateAt time.Time `json:"updateAt" db:"update_at"`
 }
@@ -27,7 +30,8 @@ func NewUser(username, password string) *User {
 	u := &User{Username: username, CreateAt: time.Now(), UpdateAt: time.Now()}
 	u.Salt = util.RandomBytes(8)
 	b := append([]byte(password), u.Salt...)
-	encPass := fmt.Sprintf("%x", md5.Sum(b))
+	hash := md5.Sum(b)
+	encPass := util.Bytes2HexStr(hash[:])
 	u.Password = encPass
 	return u
 }
@@ -38,6 +42,7 @@ func (u *User) SetPassword(password string, salt []byte) {
 		u.Salt = util.RandomBytes(8)
 	}
 	b := append([]byte(password), u.Salt...)
-	encPass := fmt.Sprintf("%x", md5.Sum(b))
+	hash := md5.Sum(b)
+	encPass := util.Bytes2HexStr(hash[:])
 	u.Password = encPass
 }

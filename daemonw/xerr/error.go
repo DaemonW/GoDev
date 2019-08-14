@@ -2,15 +2,19 @@ package xerr
 
 import "fmt"
 
-type ErrMsg struct {
+type Err struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
-func (err *ErrMsg) String() string {
+func (err *Err) String() string {
 	return fmt.Sprintf("errno: %d, %s", err.Code, err.Msg)
 }
 
-func (err *ErrMsg) Error() string {
+func (err *Err) Error() string {
 	return fmt.Sprintf("errno: %d, %s", err.Code, err.Msg)
+}
+
+func (err *Err) IsInternalErr() bool {
+	return err.Code < CodeBiz
 }

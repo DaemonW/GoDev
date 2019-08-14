@@ -19,10 +19,10 @@ domain = "example.com"
 port = 8080
 
 ### dir to storage files
-data = "/tmp/data"
+data = "/home/daemonw/data"
 
 ### dir to storage log files
-logDir = "/tmp/log"
+logDir = "/home/daemonw/log"
 
 ### database config
 [database]
@@ -63,7 +63,7 @@ password = ""
 
 ### db num
 
-num=0
+index=0
 
 ### max client connection
 maxConn = 3000

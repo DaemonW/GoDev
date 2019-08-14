@@ -11,5 +11,5 @@ const (
 	CodeQueryUser
 	CodeDelUser
 	CodeInsertUser
-	CodeRenameUser
+	CodeUpdateUser
 )

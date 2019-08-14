@@ -15,7 +15,7 @@ func newUserInfoDao() *userInfoDao {
 
 func (dao *userInfoDao) Get(id uint64) (*User, error) {
 	user := &User{}
-	err := dao.baseDao.Get(user, `SELECT * FROM user_infos WHERE user_id=?`, id)
+	err := dao.baseDao.Get(user, `SELECT * FROM user_infos WHERE id=?`, id)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -51,18 +51,18 @@ func (dao *userInfoDao) GetAll() ([]User, error) {
 
 func (dao *userInfoDao) AddUserInfo(info *UserInfo) error {
 	schema := `INSERT INTO user_infos(user_id,nickname,sex,age,email,phone,address,ip,meta) 
-						VALUES (:user_id,:nickname,:sex,:age,:email,:phone,:address,:ip,:meta)`
+						VALUES (:user_id,:nickname,:sex,:age,:email,:phone,:address,:ip,:extra)`
 	_, err := dao.baseDao.NamedExec(schema, info)
 	return err
 }
 
 func (dao *userInfoDao) DeleteUserInfo(id int64) error {
-	_, err := dao.baseDao.Exec(`DELETE FROM user_infos WHERE user_id=?`, id)
+	_, err := dao.baseDao.Exec(`DELETE FROM user_infos WHERE id=?`, id)
 	return err
 }
 
 func (dao *userInfoDao) UpdateUserInfo(id int64, info UserInfo) error {
 	_, err := dao.baseDao.NamedExec(`UPDATE user_infos SET nickname=:nickname, sex=:sex, age=:age, email=:email,
-						phone=:phone, address=:address, ip=:ip, meta=:meta WHERE id=?`, id)
+						phone=:phone, address=:address, ip=:ip, extra=:extra WHERE id=?`, id)
 	return err
 }

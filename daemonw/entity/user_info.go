@@ -1,7 +1,7 @@
 package entity
 
 type UserInfo struct {
-	UserId   uint64 `json:"userId" db:"user_id"`
+	Id   uint64 `json:"id" db:"id"`
 	Nickname string `json:"nickname" db:"nickname"`
 	Sex      uint8  `json:"sex" db:"sex"`
 	Age      uint8  `json:"age" db:"age"`
@@ -9,5 +9,5 @@ type UserInfo struct {
 	Phone    string `json:"phone" db:"phone"`
 	Address  string `json:"address" db:"address"`
 	Ip       string `json:"ip" db:"ip"`
-	Meta     string `json:"meta" db:"meta"`
+	Extra     string `json:"extra" db:"extra"`
 }

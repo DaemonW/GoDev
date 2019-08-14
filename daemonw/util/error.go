@@ -1,21 +1,15 @@
 package util
 
 import (
-	"log"
 	"runtime/debug"
 )
 
-func FatalIfErr(err error, trace bool) {
-	if err != nil {
-		log.Fatal(err)
-		if trace {
-			printTrace()
-		}
-	}
+func PrintTrace() {
+	debug.PrintStack()
 }
 
-func printTrace() {
-	debug.PrintStack()
+func StackInfo() string{
+	return string(debug.Stack())
 }
 
 func PanicIfErr(err error) {

@@ -1,21 +1,23 @@
-create table users (
-      id SERIAL primary key,
-      username varchar(64) unique ,
-      password varchar(32),
-      salt bytea,
-      create_at timestamp ,
-      update_at timestamp
+CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      username varchar(64) UNIQUE NOT NULL,
+      password varchar(32) NOT NULL,
+      salt bytea NOT NULL,
+      status smallint NOT NULL,
+      role smallint NOT NULL,
+      create_at timestamp NOT NULL,
+      update_at timestamp NOT NULL
 );
 
 
-create table user_infos (
-      user_id int primary key unique,
-      nickname varchar(64) unique ,
+CREATE TABLE user_infos (
+      id int PRIMARY KEY,
+      nickname varchar(64),
       sex int,
       age int,
       email varchar(128),
       phone varchar(64),
       address text,
       ip varchar(128),
-      meta jsonb
-)
+      extra jsonb
+);

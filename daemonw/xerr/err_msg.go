@@ -11,5 +11,7 @@ const (
 	MsgCreateUserFail     = "failed to create user"
 	MsgActiveUserFail     = "failed to active user"
 	MsgBadParam           = "bad param format"
+	MsgPermissionDenied   = "permission denied"
+	MsgIllegalRequestCode = "illegal request code"
 	MsgIllegalVerifyScope = "illegal verify scope"
 )

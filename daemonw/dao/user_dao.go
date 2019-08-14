@@ -50,8 +50,8 @@ func (dao *userDao) GetAll() ([]User, error) {
 }
 
 func (dao *userDao) CreateUser(user *User) error {
-	schema := `INSERT INTO users(username,password,salt,create_at,update_at) 
-						VALUES (:username,:password,:salt,:create_at,:update_at)`
+	schema := `INSERT INTO users(username,password,salt,status,role,create_at,update_at) 
+						VALUES (:username,:password,:salt,:status,:role,:create_at,:update_at)`
 	_, err := dao.baseDao.NamedExec(schema, user)
 	return err
 }
@@ -61,7 +61,19 @@ func (dao *userDao) DeleteUser(id int64) error {
 	return err
 }
 
-func (dao *userDao) ActiveUser(id int64) error {
-	_, err := dao.baseDao.Exec(`UPDATE users SET status=0 WHERE id=?`, id)
+func (dao *userDao) UpdateStatus(id uint64, status uint8) error {
+	_, err := dao.baseDao.Exec(`UPDATE users SET status=? WHERE id=?`, status, id)
+	return err
+}
+
+func (dao *userDao) UpdatePassword(user *User) error {
+	schema := `UPDATE users set password=:passowrd`
+	_, err := dao.baseDao.NamedExec(schema, user)
+	return err
+}
+
+func (dao *userDao) UpdateRole(user *User) error {
+	schema := `UPDATE users set role=:role`
+	_, err := dao.baseDao.NamedExec(schema, user)
 	return err
 }

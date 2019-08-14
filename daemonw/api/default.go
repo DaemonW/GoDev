@@ -28,12 +28,11 @@ func GetRouter() *gin.Engine {
 }
 
 func initUserRouter() {
-	router.GET("/api/user/:user_id", controller.GetUser)
 	router.POST("/api/users", controller.CreateUser)
-	router.POST("/api/user/auth/token", controller.Login)
-	router.POST("/api/user/auth/active", controller.ActiveUser)
-	router.PUT("/api/user/:user_id", controller.ActiveUser)
+	router.GET("/api/user/:id", controller.GetUser)
 	router.GET("/api/users", controller.GetUsers)
+	router.POST("/api/user/token", controller.GenToken)
+	router.PUT("/api/user/:id", controller.UpdateUser)
 
 	authRouter := router.Group("")
 	authRouter.Use(middleware.JwtAuth())

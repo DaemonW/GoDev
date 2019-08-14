@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func Login(c *gin.Context) {
+func GenToken(c *gin.Context) {
 	var loginUser struct {
 		Username string `json:"username" form:"username"`
 		Password string `json:"password" form:"password"`
@@ -36,12 +36,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	if u.Status == StatusUserInactive {
+	if u.Status == UserStatusInactive {
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, xerr.MsgUserNotActive))
 		return
 	}
 
-	if u.Status == StatusUserFreeze {
+	if u.Status == UserStatusFreeze {
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, xerr.MsgFreezeUser))
 		return
 	}
@@ -58,7 +58,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		c.Writer.Header().Set("auth", token)
-		dao.Redis().Set("token_secret:"+strconv.FormatUint(u.ID, 10), u.Password, time.Minute*10)
+		dao.Redis().Set("token_secret:"+strconv.FormatUint(u.Id, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			NewResp().
 				AddResult("msg", "login success").
@@ -73,7 +73,7 @@ func genJwtToken(user *User, ip string) (string, error) {
 	claims := Claims{
 		Ip: ip,
 		StandardClaims: jwt.StandardClaims{
-			Id:        strconv.FormatUint(user.ID, 10),
+			Id:        strconv.FormatUint(user.Id, 10),
 			Issuer:    "server",
 			ExpiresAt: time.Now().Add(time.Hour * 24 * 14).Unix(),
 			Audience:  user.Username,

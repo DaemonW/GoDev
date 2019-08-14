@@ -74,10 +74,10 @@ func listenShutdownSignal(srv *http.Server) {
 func closeDataSourceConn() {
 	if dao.DB() != nil {
 		xlog.Info().Msg("close database connection")
-		util.FatalIfErr(dao.DB().Close(), false)
+		util.PanicIfErr(dao.DB().Close())
 	}
 	if dao.Redis() != nil {
 		xlog.Info().Msg("close redis connection")
-		util.FatalIfErr(dao.Redis().Close(), false)
+		util.PanicIfErr(dao.Redis().Close())
 	}
 }
