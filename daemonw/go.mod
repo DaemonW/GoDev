@@ -11,6 +11,7 @@ require (
 	github.com/rs/zerolog v1.14.3
 	github.com/spf13/viper v1.4.0
 	golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed // indirect
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
