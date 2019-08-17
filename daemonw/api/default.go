@@ -29,12 +29,13 @@ func GetRouter() *gin.Engine {
 
 func initUserRouter() {
 	router.POST("/api/users", controller.CreateUser)
-	router.GET("/api/user/:id", controller.GetUser)
-	router.GET("/api/users", controller.GetUsers)
 	router.POST("/api/user/token", controller.GenToken)
-	router.PUT("/api/user/:id", controller.UpdateUser)
+	router.GET("/api/security/verify_code", controller.GetVerifyCode)
 
 	authRouter := router.Group("")
 	authRouter.Use(middleware.JwtAuth())
-	authRouter.GET("/security/verify_code", controller.GetVerifyCode)
+	authRouter.GET("/api/user/:id", controller.GetUser)
+	authRouter.GET("/api/users", controller.GetUsers)
+	authRouter.PUT("/api/user/:id", controller.UpdateUser)
+	authRouter.DELETE("/api/user/:id", controller.DeleteUser)
 }

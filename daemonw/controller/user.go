@@ -26,11 +26,11 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 	if name == "*" {
-		role, _ := strconv.ParseUint(c.MustGet("role").(string), 10, 8)
+		role := c.MustGet("role").(uint8)
 		if role == UserRoleNormal {
 			c.JSON(http.StatusOK, NewResp().AddResult("users", nil))
 		} else if role == UserRoleAdmin {
-			err, users := dao.UserDao.GetAll()
+			users, err := dao.UserDao.GetAll()
 			if err != nil {
 				xlog.Panic().Msg(util.StackInfo())
 				c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
@@ -103,6 +103,7 @@ func CreateUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
+	role := c.MustGet("role").(uint8)
 	_status := c.Query("status")
 	if !util.IsEmpty(_status) {
 		code := c.Query("code")
@@ -122,7 +123,7 @@ func UpdateUser(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 			return
 		}
-		if err1 := updateUserStatus(u, uint8(status), code); err1 != nil {
+		if err1 := updateUserStatus(u, uint8(status), code, role == UserRoleAdmin); err1 != nil {
 			if err1.IsInternalErr() {
 				c.JSON(http.StatusInternalServerError, err1)
 			} else {
@@ -133,22 +134,26 @@ func UpdateUser(c *gin.Context) {
 	}
 }
 
-func updateUserStatus(user *User, newStatus uint8, code string) *xerr.Err {
+func updateUserStatus(user *User, newStatus uint8, code string, isAdmin bool) *xerr.Err {
+	if user==nil{
+		return nil
+	}
+
 	if user.Status == newStatus {
 		return nil
 	}
 
 	if user.Status == UserStatusNormal {
-		if user.Role != UserRoleAdmin {
+		if !isAdmin {
 			return &xerr.Err{xerr.CodeUpdateUser, xerr.MsgPermissionDenied}
 		}
 	} else if user.Status == UserStatusFreeze {
-		if user.Role != UserRoleAdmin {
+		if !isAdmin {
 			return &xerr.Err{xerr.CodeUpdateUser, xerr.MsgPermissionDenied}
 		}
 
 	} else if user.Status == UserStatusInactive {
-		if user.Role == UserRoleNormal {
+		if !isAdmin {
 			if newStatus == UserStatusNormal {
 				requestCode := dao.Redis().Get("verify_code:active" + strconv.FormatUint(user.Id, 10)).String()
 				if requestCode != code {
@@ -168,7 +173,7 @@ func updateUserStatus(user *User, newStatus uint8, code string) *xerr.Err {
 }
 
 func DeleteUser(c *gin.Context) {
-	role, _ := strconv.ParseUint(c.MustGet("role").(string), 0, 8)
+	role, _ := c.MustGet("role").(uint8)
 	if role != UserRoleAdmin {
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeDelUser, xerr.MsgPermissionDenied))
 		return

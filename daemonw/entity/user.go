@@ -10,7 +10,9 @@ const (
 	UserStatusInactive = iota
 	UserStatusNormal
 	UserStatusFreeze
+)
 
+const (
 	UserRoleNormal = iota
 	UserRoleAdmin
 )
@@ -28,21 +30,19 @@ type User struct {
 
 func NewUser(username, password string) *User {
 	u := &User{Username: username, CreateAt: time.Now(), UpdateAt: time.Now()}
-	u.Salt = util.RandomBytes(8)
-	b := append([]byte(password), u.Salt...)
-	hash := md5.Sum(b)
-	encPass := util.Bytes2HexStr(hash[:])
-	u.Password = encPass
+	u.Password, u.Salt = GenPassword(password, nil)
+	u.CreateAt = time.Now()
+	u.UpdateAt = time.Now()
 	return u
 }
 
-func (u *User) SetPassword(password string, salt []byte) {
-	u.Salt = salt
+func GenPassword(password string, salt []byte) (string, []byte) {
+	var s []byte
 	if salt == nil || len(salt) != 8 {
-		u.Salt = util.RandomBytes(8)
+		s = util.RandomBytes(8)
 	}
-	b := append([]byte(password), u.Salt...)
+	b := append([]byte(password), s...)
 	hash := md5.Sum(b)
-	encPass := util.Bytes2HexStr(hash[:])
-	u.Password = encPass
+	p := util.Bytes2HexStr(hash[:])
+	return p, s
 }

@@ -3,9 +3,11 @@ package xerr
 //business code
 const (
 	CodeInternal = 1000 + iota
-
+)
+const (
 	CodeBiz = 2000 + iota
 	CodeAuth
+	CodeVerify
 	CodeLogin
 	CodeCreateUser
 	CodeQueryUser

@@ -58,7 +58,7 @@ func GenToken(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 			return
 		}
-		c.Writer.Header().Set("auth", token)
+		c.Writer.Header().Set("Authorization", token)
 		dao.Redis().Set("token_secret:"+strconv.FormatUint(u.Id, 10), u.Password, time.Minute*10)
 		c.JSON(http.StatusOK,
 			NewResp().

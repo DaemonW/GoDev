@@ -9,24 +9,33 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	SupportVerify = []string{"ACTIVE", "RESET_PASS", "RESET_EMAIL"}
+	SupportVerify = []string{"ACTIVE_USER", "RESET_PASS", "RESET_EMAIL"}
+)
+
+const (
+	CodeExpire = time.Minute * 10;
 )
 
 func GetVerifyCode(c *gin.Context) {
-	uid := c.MustGet("uid").(uint64)
 	scope := c.Query("scope")
 	if !isSupport(scope) {
-		c.JSON(http.StatusBadRequest, entity.NewResp().WithErrMsg(xerr.CodeAuth, xerr.MsgIllegalVerifyScope))
+		c.JSON(http.StatusBadRequest, entity.NewResp().WithErrMsg(xerr.CodeVerify, xerr.MsgIllegalVerifyScope))
+		return
+	}
+	uid,_ := strconv.ParseUint(c.Query("uid"),10,64)
+	if uid<=0{
+		c.JSON(http.StatusBadRequest, entity.NewResp().WithErrMsg(xerr.CodeVerify, xerr.MsgUserNotExist))
 		return
 	}
 	code := util.RandomNum(8)
 	requestKey := fmt.Sprintf("verify_code:%s:%d", scope, uid)
-	err := dao.Redis().Set(requestKey, code, time.Minute*10).Err()
+	err := dao.Redis().Set(requestKey, code, CodeExpire).Err()
 	if err != nil {
 		xlog.Error().Err(err).Msg("generate verify code failed")
 		c.JSON(http.StatusInternalServerError, entity.NewRespErr(xerr.CodeInternal, xerr.MsgInternal))

@@ -6,7 +6,6 @@ import (
 	"daemonw/api"
 	"daemonw/conf"
 	"daemonw/dao"
-	"daemonw/util"
 	"daemonw/xlog"
 	"net/http"
 	"os"
@@ -19,10 +18,8 @@ import (
 func main() {
 	conf.InitConfig()
 	xlog.InitLog()
-	dao.InitRedis()
-	dao.InitDB()
-	dao.InitDaoManager()
-	defer closeDataSourceConn()
+	dao.InitDao()
+	defer dao.CloseDao()
 
 	cfg := conf.Config
 	router := api.GetRouter()
@@ -53,10 +50,6 @@ func main() {
 	listenShutdownSignal(srv)
 }
 
-func init() {
-
-}
-
 func listenShutdownSignal(srv *http.Server) {
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
@@ -68,16 +61,5 @@ func listenShutdownSignal(srv *http.Server) {
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		xlog.Error().Err(err).Msg("shutdown server error")
-	}
-}
-
-func closeDataSourceConn() {
-	if dao.DB() != nil {
-		xlog.Info().Msg("close database connection")
-		util.PanicIfErr(dao.DB().Close())
-	}
-	if dao.Redis() != nil {
-		xlog.Info().Msg("close redis connection")
-		util.PanicIfErr(dao.Redis().Close())
 	}
 }

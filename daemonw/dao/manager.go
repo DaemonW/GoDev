@@ -2,7 +2,9 @@ package dao
 
 import (
 	"daemonw/conf"
+	"daemonw/entity"
 	"daemonw/util"
+	"daemonw/xlog"
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
@@ -11,10 +13,6 @@ import (
 )
 
 var UserDao *userDao
-
-func InitDaoManager() {
-	UserDao = newUserDao()
-}
 
 const (
 	DialWithoutPass = "postgres://%s@%s:%d/%s?sslmode=%s"
@@ -26,7 +24,7 @@ var (
 	rsConn *redis.Client
 )
 
-func InitDB() {
+func initDB() {
 	var err error
 	c := &conf.Config.Database
 	//connStr := "postgres://postgres:a123456@localhost:5432/mydb?sslmode=disable"
@@ -40,7 +38,15 @@ func InitDB() {
 	util.PanicIfErr(err)
 }
 
-func InitRedis() {
+func initUser() {
+	admin:= entity.NewUser("admin","admin")
+	admin.Status = entity.UserStatusNormal
+	admin.Role = entity.UserRoleAdmin
+	err:= UserDao.CreateUserIfNotExist(admin)
+	util.PanicIfErr(err)
+}
+
+func initRedis() {
 	cfg := conf.Config.Redis
 	addr := cfg.Host + ":" + strconv.Itoa(cfg.Port)
 	clientOption := &redis.Options{
@@ -59,4 +65,22 @@ func DB() *sqlx.DB {
 
 func Redis() *redis.Client {
 	return rsConn
+}
+
+func InitDao() {
+	initDB()
+	initRedis()
+	UserDao = newUserDao()
+	initUser()
+}
+
+func CloseDao() {
+	if dbConn != nil {
+		xlog.Info().Msg("close database connection")
+		util.PanicIfErr(dbConn.Close())
+	}
+	if rsConn != nil {
+		xlog.Info().Msg("close redis connection")
+		util.PanicIfErr(rsConn.Close())
+	}
 }

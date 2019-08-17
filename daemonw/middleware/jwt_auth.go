@@ -1,20 +1,19 @@
 package middleware
 
 import (
-	"errors"
-	"net/http"
-
 	"daemonw/dao"
 	"daemonw/entity"
 	"daemonw/xerr"
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strconv"
 )
 
 func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenStr := c.Request.Header.Get("auth")
+		tokenStr := c.Request.Header.Get("Authorization")
 		if tokenStr == "" {
 			c.JSON(http.StatusUnauthorized, entity.NewRespErr(xerr.CodeAuth, "invalid token"))
 			c.Abort()
@@ -35,6 +34,7 @@ func JwtAuth() gin.HandlerFunc {
 		}
 		c.Set("uid", uid)
 		c.Set("user", params.Audience)
+		c.Set("role", params.Role)
 		c.Next()
 	}
 }
@@ -65,10 +65,12 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 		dao.Redis().Set("token_secret:"+claims.Id, user.Password, 0)
 		return []byte(user.Password), nil
 	})
-
-	claims, ok := token.Claims.(entity.Claims)
+	_, ok := token.Claims.(*entity.Claims)
 	if !ok {
 		return nil, errors.New("invalid token format")
+	}
+	if !token.Valid{
+		return nil, errors.New("invalid token")
 	}
 	return token, err
 }
