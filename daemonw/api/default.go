@@ -14,7 +14,7 @@ func initRouter() {
 	gin.SetMode(gin.ReleaseMode)
 	router = newEngine()
 	//init routers
-	initUserRouter()
+	initUserRouter(router)
 	//initStaticRouter()
 }
 
@@ -29,18 +29,19 @@ func GetRouter() *gin.Engine {
 	return router
 }
 
-func initUserRouter() {
-	router.POST("/api/users",
+func initUserRouter(r *gin.Engine) {
+	plainRooter := r.Group("")
+	plainRooter.POST("/api/users",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.CreateUser)
-	router.POST("/api/user/token",
+	plainRooter.POST("/api/user/token",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.GenToken)
-	router.GET("/api/security/verify_code",
+	plainRooter.GET("/api/security/verify_code",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.GetVerifyCode)
 
-	authRouter := router.Group("")
+	authRouter := r.Group("")
 	authRouter.Use(middleware.JwtAuth())
 	authRouter.GET("/api/user/:id",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
