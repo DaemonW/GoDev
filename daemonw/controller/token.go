@@ -22,12 +22,13 @@ func GenToken(c *gin.Context) {
 		Password string `json:"password" form:"password"`
 	}
 	if err := c.ShouldBindWith(&loginUser, binding.JSON); err != nil {
+		xlog.Error().Msg(util.StackInfo())
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, err.Error()))
 		return
 	}
 
 	u, err := dao.UserDao.GetByName(loginUser.Username)
-	if err!=nil{
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 		return
 	}
@@ -72,6 +73,7 @@ func GenToken(c *gin.Context) {
 func genJwtToken(user *User, ip string) (string, error) {
 	claims := Claims{
 		Ip: ip,
+		Role: user.Role,
 		StandardClaims: jwt.StandardClaims{
 			Id:        strconv.FormatUint(user.Id, 10),
 			Issuer:    "server",

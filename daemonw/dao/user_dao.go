@@ -56,7 +56,7 @@ func (dao *userDao) CreateUser(user *User) error {
 	return err
 }
 
-func (dao *userDao) DeleteUser(id int64) error {
+func (dao *userDao) DeleteUser(id uint64) error {
 	_, err := dao.baseDao.Exec(`DELETE FROM users WHERE id=?`, id)
 	return err
 }

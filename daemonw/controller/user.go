@@ -25,6 +25,21 @@ func GetUsers(c *gin.Context) {
 		c.JSON(http.StatusOK, NewResp().AddResult("users", nil))
 		return
 	}
+	if name == "*" {
+		role, _ := strconv.ParseUint(c.MustGet("role").(string), 10, 8)
+		if role == UserRoleNormal {
+			c.JSON(http.StatusOK, NewResp().AddResult("users", nil))
+		} else if role == UserRoleAdmin {
+			err, users := dao.UserDao.GetAll()
+			if err != nil {
+				xlog.Panic().Msg(util.StackInfo())
+				c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+				return
+			}
+			c.JSON(http.StatusOK, NewResp().AddResult("users", users))
+		}
+		return
+	}
 	users, err := dao.UserDao.GetLikeName(name)
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
@@ -107,10 +122,10 @@ func UpdateUser(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 			return
 		}
-		if err1 := updateUserStatus(u, uint8(status), code);err1!=nil{
-			if err1.IsInternalErr(){
+		if err1 := updateUserStatus(u, uint8(status), code); err1 != nil {
+			if err1.IsInternalErr() {
 				c.JSON(http.StatusInternalServerError, err1)
-			}else{
+			} else {
 				c.JSON(http.StatusBadRequest, err1)
 			}
 		}
@@ -152,6 +167,24 @@ func updateUserStatus(user *User, newStatus uint8, code string) *xerr.Err {
 	return nil
 }
 
+func DeleteUser(c *gin.Context) {
+	role, _ := strconv.ParseUint(c.MustGet("role").(string), 0, 8)
+	if role != UserRoleAdmin {
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeDelUser, xerr.MsgPermissionDenied))
+		return
+	}
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	if id <= 0 {
+		return
+	}
+	err := dao.UserDao.DeleteUser(id)
+	if err != nil {
+		xlog.Panic().Msg(util.StackInfo())
+		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
+		return
+	}
+}
+
 func sendMail(user *User) {
 	serverConf := conf.Config.SMTPServer
 	d := gomail.NewDialer(serverConf.Host, serverConf.Port, serverConf.Account, serverConf.Password)
@@ -176,5 +209,5 @@ func genActiveUrl(user *User) string {
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 	}
-	return fmt.Sprintf("http://%s:%d/api/user/%d?verify_code=%s",conf.Config.Domain, conf.Config.Port, user.Id, code)
+	return fmt.Sprintf("http://%s:%d/api/user/%d?verify_code=%s", conf.Config.Domain, conf.Config.Port, user.Id, code)
 }

@@ -41,13 +41,9 @@ func JwtAuth() gin.HandlerFunc {
 
 func verifyToken(tokenStr string) (*jwt.Token, error) {
 	var pass string
-	var claims entity.Claims
+	claims:= entity.Claims{}
 	//check token
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
-		claims, ok := token.Claims.(*entity.Claims)
-		if !ok {
-			return nil, errors.New("invalid token format")
-		}
 		//get cached pass
 		result, err := dao.Redis().Get("token_secret:" + claims.Id).Result()
 		//if cached, verified
@@ -69,5 +65,10 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 		dao.Redis().Set("token_secret:"+claims.Id, user.Password, 0)
 		return []byte(user.Password), nil
 	})
+
+	claims, ok := token.Claims.(entity.Claims)
+	if !ok {
+		return nil, errors.New("invalid token format")
+	}
 	return token, err
 }
