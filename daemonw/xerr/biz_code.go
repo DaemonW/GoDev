@@ -6,6 +6,7 @@ const (
 )
 const (
 	CodeBiz = 2000 + iota
+	CodeRateLimit
 	CodeAuth
 	CodeVerify
 	CodeLogin

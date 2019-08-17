@@ -14,4 +14,5 @@ const (
 	MsgPermissionDenied   = "permission denied"
 	MsgIllegalRequestCode = "illegal request code"
 	MsgIllegalVerifyScope = "illegal verify scope"
+	MsgAccessFrequency    = "access too frequency"
 )
