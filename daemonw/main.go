@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"daemonw/api"
+	"daemonw/router"
 	"daemonw/conf"
 	"daemonw/dao"
 	"daemonw/xlog"
@@ -22,7 +22,7 @@ func main() {
 	defer dao.CloseDao()
 
 	cfg := conf.Config
-	router := api.GetRouter()
+	router := router.GetRouter()
 	var tlsConf *tls.Config
 	//tls config
 	srv := &http.Server{
