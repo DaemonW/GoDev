@@ -63,25 +63,25 @@ func (dao *baseDao) Delete(sqlStatement string, args ...interface{}) (sql.Result
 	return dao.Exec(sqlStatement, args...)
 }
 
-func (dao *baseDao) DeleteObj(sqlStatement string, args ...interface{}) (sql.Result, error) {
+func (dao *baseDao) DeleteObj(sqlStatement string, arg interface{}) (sql.Result, error) {
 	if strings.ToUpper(subString(sqlStatement, 0, 6)) != "DELETE" {
 		return nil, errors.New("illegal statement")
 	}
-	return dao.NamedExec(sqlStatement, args)
+	return dao.NamedExec(sqlStatement, arg)
 }
 
 func (dao *baseDao) Create(sqlStatement string, args ...interface{}) (sql.Result, error) {
-	if strings.ToUpper(subString(sqlStatement, 0, 6)) != "CREATE" {
+	if strings.ToUpper(subString(sqlStatement, 0, 6)) != "INSERT" {
 		return nil, errors.New("illegal statement")
 	}
 	return dao.Exec(sqlStatement, args...)
 }
 
-func (dao *baseDao) CreateObj(sqlStatement string, args ...interface{}) (sql.Result, error) {
-	if strings.ToUpper(subString(sqlStatement, 0, 6)) != "CREATE" {
+func (dao *baseDao) CreateObj(sqlStatement string, arg interface{}) (sql.Result, error) {
+	if strings.ToUpper(subString(sqlStatement, 0, 6)) != "INSERT" {
 		return nil, errors.New("illegal statement")
 	}
-	return dao.NamedExec(sqlStatement, args)
+	return dao.NamedExec(sqlStatement, arg)
 }
 
 func (dao *baseDao) Update(sqlStatement string, args ...interface{}) (sql.Result, error) {

@@ -28,7 +28,7 @@ func GetVerifyCode(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, entity.NewResp().WithErrMsg(xerr.CodeVerify, xerr.MsgIllegalVerifyScope))
 		return
 	}
-	uid,_ := strconv.ParseUint(c.Query("uid"),10,64)
+	uid,_ := strconv.ParseUint(c.Query("user_id"),10,64)
 	if uid<=0{
 		c.JSON(http.StatusBadRequest, entity.NewResp().WithErrMsg(xerr.CodeVerify, xerr.MsgUserNotExist))
 		return

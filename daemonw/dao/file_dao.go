@@ -10,9 +10,9 @@ func newFileDao() *fileDao {
 	return &fileDao{baseDao: newBaseDao()}
 }
 
-func (dao *fileDao) AddFile(f File) error {
-	smt := `INSERT INTO files(id,name,size,parent_id,type,create_at, meta_data) 
-						VALUES (:id,:name,:size,:parent_id,:type,:create_at,:meta_data) return id`
+func (dao *fileDao) CreateFile(f File) error {
+	smt := `INSERT INTO files(owner,name,size,parent_id,type,create_at, meta)
+						VALUES (:owner,:name,:size,:parent_id,:type,:create_at,:meta) returning id`
 	_, err := dao.CreateObj(smt, f)
 	return err
 }

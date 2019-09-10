@@ -50,8 +50,7 @@ func GetUsers(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	_id := c.Param("id")
-	id, _ := strconv.ParseUint(_id, 10, 64);
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	if id <= 0 {
 		c.JSON(http.StatusNotFound, NewRespErr(xerr.CodeQueryUser, xerr.MsgUserNotExist))
 		return
@@ -73,7 +72,7 @@ func CreateUser(c *gin.Context) {
 		Password string `json:"password" valid:"printableascii,length(8|16)"`
 	}
 	if err = c.ShouldBindWith(&registerUser, binding.JSON); err != nil {
-		c.JSON(http.StatusNotAcceptable, NewRespErr(xerr.CodeCreateUser, xerr.MsgBadParam))
+		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeCreateUser, xerr.MsgBadParam))
 		return
 	}
 	_, err = govalidator.ValidateStruct(registerUser)
@@ -135,7 +134,7 @@ func UpdateUser(c *gin.Context) {
 }
 
 func updateUserStatus(user *User, newStatus uint8, code string, isAdmin bool) *xerr.Err {
-	if user==nil{
+	if user == nil {
 		return nil
 	}
 

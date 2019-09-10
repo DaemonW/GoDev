@@ -12,7 +12,10 @@ import (
 	"strconv"
 )
 
-var UserDao *userDao
+var (
+	UserDao *userDao
+	FileDao *fileDao
+)
 
 const (
 	DialWithoutPass = "postgres://%s@%s:%d/%s?sslmode=%s"
@@ -71,6 +74,7 @@ func InitDao() {
 	initDB()
 	initRedis()
 	UserDao = newUserDao()
+	FileDao = newFileDao()
 	initUser()
 }
 

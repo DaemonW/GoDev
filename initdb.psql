@@ -1,5 +1,5 @@
 CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
+      id BIGSERIAL PRIMARY KEY,
       username varchar(64) UNIQUE NOT NULL,
       password varchar(32) NOT NULL,
       salt bytea NOT NULL,
@@ -11,13 +11,25 @@ CREATE TABLE users (
 
 
 CREATE TABLE user_infos (
-      id int PRIMARY KEY,
+      id bigint PRIMARY KEY references users(id),
       nickname varchar(64),
-      sex int,
-      age int,
+      sex smallint,
+      age smallint,
       email varchar(128),
       phone varchar(64),
       address text,
       ip varchar(128),
-      extra jsonb
+      extra text
+);
+
+CREATE TABLE files (
+      id BIGSERIAL,
+      owner bigint NOT NUll references users(id),
+      name varchar(256) NOT NULL,
+      size integer NOT NULL,
+      parent_id bigint NOT NULL,
+      type smallint NOT NULL,
+      create_at timestamp NOT NULL,
+      meta text,
+      PRIMARY key(owner, name, parent_id, type)
 );

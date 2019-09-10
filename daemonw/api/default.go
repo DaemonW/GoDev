@@ -34,25 +34,31 @@ func initUserRouter(r *gin.Engine) {
 	plainRooter.POST("/api/users",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.CreateUser)
-	plainRooter.POST("/api/user/token",
+	plainRooter.POST("/api/tokens",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.GenToken)
-	plainRooter.GET("/api/security/verify_code",
+	plainRooter.GET("/api/security/verify_codes",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.GetVerifyCode)
 
 	authRouter := r.Group("")
 	authRouter.Use(middleware.JwtAuth())
-	authRouter.GET("/api/user/:id",
+	authRouter.GET("/api/users/:id",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.GetUser)
 	authRouter.GET("/api/users",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.GetUsers)
-	authRouter.PUT("/api/user/:id",
+	authRouter.PUT("/api/users/:id",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.UpdateUser)
-	authRouter.DELETE("/api/user/:id",
+	authRouter.DELETE("/api/users/:id",
 		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
 		controller.DeleteUser)
+
+
+	fileRouter := r.Group("")
+	fileRouter.POST("/api/users/:id/files",
+		middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1),
+		controller.CreateFile)
 }

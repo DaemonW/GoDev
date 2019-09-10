@@ -15,4 +15,5 @@ const (
 	MsgIllegalRequestCode = "illegal request code"
 	MsgIllegalVerifyScope = "illegal verify scope"
 	MsgAccessFrequency    = "access too frequency"
+	MsgCreteFileFailed    = "create file failed"
 )
