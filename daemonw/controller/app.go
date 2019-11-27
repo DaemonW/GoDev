@@ -10,7 +10,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/shogo82148/androidbinary/apk"
 	"io"
 	"net/http"
@@ -71,43 +70,62 @@ func CreateApp(c *gin.Context) {
 	h, err := crypto.GetFileHash(filePath, "MD5")
 	util.PanicIfErr(err)
 	app.Hash = util.Bytes2HexStr(h)
-	appDao := dao.NewAppDao()
-	if err = appDao.CreateApp(app); err != nil {
+	exist, err := insertApp(app)
+	if err != nil {
 		os.Remove(filePath)
 		util.PanicIfErr(err)
+	}
+	if exist {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "apk already exist"))
+		return
 	}
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("app", app))
 }
 
-func insertApp(app entity.App) error {
+func insertApp(app *entity.App) (exist bool, err error) {
 	daoConn := dao.NewDao()
-	err := daoConn.BeginTx()
+	err = daoConn.BeginTx()
 	if err != nil {
-		return err
+		return false, err
 	}
-	type AppVersion struct {
-		AppId  string `db:"app_id"`
-		Latest string `db:"latest"`
-	}
-	version := &AppVersion{}
-	smt := `SELECT apps.app_id,updates.latest FROM apps RIGHT JOIN updates ON apps.app_id=updates.app_id WHERE apps.app_id=? AND apps.version=?`
-	err = daoConn.Get(version, smt, app.AppId, app.Version)
+	existApp := &entity.Update{}
+	smt := `SELECT apps.app_id, updates.latest FROM apps LEFT JOIN updates ON apps.app_id=updates.app_id WHERE updates.app_id=?`
+	err = daoConn.Get(existApp, smt, app.AppId)
 	if err != nil && err != sql.ErrNoRows {
 		daoConn.RollBack()
-		return err
+		return false, err
 	}
-	if version.AppId != "" {
+	if existApp != nil && existApp.AppId != "" {
 		daoConn.RollBack()
-		return errors.New("app already exists")
+		return true, nil
 	}
-	smt = `INSERT INTO apps(id,app_id,version,name,size,hash,encrypted,url)
-						VALUES (:id,:app_id,:version,:name,:size,:hash,:encrypted,:url) RETURNING id`
+	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url)
+						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url)`
 	_, err = daoConn.CreateObj(smt, app)
 	if err != nil {
 		daoConn.RollBack()
-		return err
+		return false, err
 	}
-	return nil
+
+	//need update latest app version
+	latestApp := &entity.Update{app.AppId, app.VersionCode}
+	if existApp.Latest <= 0 {
+		smt := `INSERT INTO updates(app_id,latest) VALUES (:app_id,:latest)`
+		_, err = daoConn.CreateObj(smt, latestApp)
+	} else if app.VersionCode > existApp.Latest {
+		smt := `UPDATE updates SET latest=:latest WHERE updates.app_id=':app_id'`
+		_, err = daoConn.UpdateObj(smt, latestApp)
+	}
+	if err != nil {
+		daoConn.RollBack()
+		return false, err
+	} else {
+		err = daoConn.Commit()
+		if err != nil {
+			return false, err
+		}
+	}
+	return false, nil
 }
 
 func QueryApp(c *gin.Context) {
@@ -173,26 +191,6 @@ func DownloadApp(c *gin.Context) {
 	} else {
 		c.File(filePath)
 	}
-}
-
-func version2Code(version string) (int64, error) {
-	fields := strings.Split(version, ".")
-	if len(fields) < 3 {
-		return 0, errors.New("illegal version code")
-	}
-	h, err := strconv.ParseInt(fields[0], 10, 32)
-	if err != nil {
-		return 0, err
-	}
-	m, err := strconv.ParseInt(fields[1], 10, 32)
-	if err != nil {
-		return 0, err
-	}
-	l, err := strconv.ParseInt(fields[2], 10, 32)
-	if err != nil {
-		return 0, err
-	}
-	return h*1e+08 + m*1e+04 + l, nil
 }
 
 func ParseApkFromReader(r io.ReaderAt, size int64) (*entity.App, error) {

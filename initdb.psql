@@ -47,7 +47,7 @@ create TABLE apps (
       PRIMARY key(app_id, version)
 );
 
-create TABLE versions (
+create TABLE updates (
       app_id varchar(256) PRIMARY KEY,
-      max varchar(256) NOT NULL
+      latest int4 NOT NULL
 );

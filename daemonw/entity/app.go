@@ -14,5 +14,5 @@ type App struct {
 
 type Update struct {
 	AppId  string `db:"app_id"`
-	Latest string `db:"latest"`
+	Latest int32 `db:"latest"`
 }
