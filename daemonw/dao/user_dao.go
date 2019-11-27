@@ -9,8 +9,8 @@ type userDao struct {
 	*baseDao
 }
 
-func newUserDao() *userDao {
-	return &userDao{newBaseDao()}
+func NewUserDao() *userDao {
+	return &userDao{NewDao()}
 }
 
 func (dao *userDao) Get(id uint64) (*entity.User, error) {

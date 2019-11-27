@@ -16,4 +16,5 @@ const (
 	MsgIllegalVerifyScope = "illegal verify scope"
 	MsgAccessFrequency    = "access too frequency"
 	MsgCreteFileFailed    = "create file failed"
+	MsgUnknownContent = "unknown content type"
 )

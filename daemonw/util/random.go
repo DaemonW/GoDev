@@ -7,6 +7,7 @@ import (
 
 const (
 	Numbers = "0123456789"
+	Alphas  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 func RandomBytes(len int) []byte {
@@ -23,6 +24,15 @@ func RandomNum(len int) string {
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < len; i++ {
 		b[i] = Numbers[rand.Intn(256)%10];
+	}
+	return string(b)
+}
+
+func RandomCharacters(len int) string {
+	b := make([]byte, len)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < len; i++ {
+		b[i] = Alphas[rand.Intn(256)%62];
 	}
 	return string(b)
 }

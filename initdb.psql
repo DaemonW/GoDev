@@ -1,4 +1,4 @@
-CREATE TABLE users (
+create TABLE users (
       id BIGSERIAL PRIMARY KEY,
       username varchar(64) UNIQUE NOT NULL,
       password varchar(32) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE users (
 );
 
 
-CREATE TABLE user_infos (
+create TABLE user_infos (
       id bigint PRIMARY KEY references users(id),
       nickname varchar(64),
       sex smallint,
@@ -22,7 +22,7 @@ CREATE TABLE user_infos (
       extra text
 );
 
-CREATE TABLE files (
+create TABLE files (
       id BIGSERIAL,
       owner bigint NOT NUll references users(id),
       name varchar(256) NOT NULL,
@@ -32,4 +32,22 @@ CREATE TABLE files (
       create_at timestamp NOT NULL,
       meta text,
       PRIMARY key(owner, name, parent_id, type)
+);
+
+create TABLE apps (
+      id BIGSERIAL,
+      app_id varchar(256) NOT NULL,
+      version varchar(256) NOT NULL,
+      version_code int4,
+      name varchar(256) NOT NULL,
+      size integer NOT NULL,
+      hash varchar(64) NOT NULL,
+      encrypted boolean NOT NULL,
+      url varchar(1024),
+      PRIMARY key(app_id, version)
+);
+
+create TABLE versions (
+      app_id varchar(256) PRIMARY KEY,
+      max varchar(256) NOT NULL
 );

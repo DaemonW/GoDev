@@ -13,7 +13,7 @@ type baseDao struct {
 	tx       *sqlx.Tx
 }
 
-func newBaseDao() *baseDao {
+func NewDao() *baseDao {
 	return &baseDao{db: dbConn, enableTx: false}
 }
 

@@ -8,7 +8,9 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.0.0
 	github.com/pelletier/go-toml v1.2.0
+	github.com/pkg/errors v0.8.1
 	github.com/rs/zerolog v1.14.3
+	github.com/shogo82148/androidbinary v1.0.1
 	github.com/spf13/viper v1.4.0
 	golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4

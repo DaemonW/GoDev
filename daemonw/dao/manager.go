@@ -12,11 +12,6 @@ import (
 	"strconv"
 )
 
-var (
-	UserDao *userDao
-	FileDao *fileDao
-)
-
 const (
 	DialWithoutPass = "postgres://%s@%s:%d/%s?sslmode=%s"
 	DialWithPass    = "postgres://%s:%s@%s:%d/%s?sslmode=%s"
@@ -42,10 +37,11 @@ func initDB() {
 }
 
 func initUser() {
-	admin:= entity.NewUser("admin","admin")
+	admin := entity.NewUser("admin", "admin")
 	admin.Status = entity.UserStatusNormal
 	admin.Role = entity.UserRoleAdmin
-	err:= UserDao.CreateUserIfNotExist(admin)
+	userDao := NewUserDao()
+	err := userDao.CreateUserIfNotExist(admin)
 	util.PanicIfErr(err)
 }
 
@@ -73,8 +69,6 @@ func Redis() *redis.Client {
 func InitDao() {
 	initDB()
 	initRedis()
-	UserDao = newUserDao()
-	FileDao = newFileDao()
 	initUser()
 }
 

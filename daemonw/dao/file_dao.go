@@ -6,8 +6,8 @@ type fileDao struct {
 	*baseDao
 }
 
-func newFileDao() *fileDao {
-	return &fileDao{baseDao: newBaseDao()}
+func NewFileDao() *fileDao {
+	return &fileDao{baseDao: NewDao()}
 }
 
 func (dao *fileDao) CreateFile(f File) error {

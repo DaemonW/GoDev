@@ -15,10 +15,15 @@ const (
 	CodeDelUser
 	CodeInsertUser
 	CodeUpdateUser
+	CodePermDenied
 
 	CodeCreateFile
 	CodeQueryFile
 	CodeDeleteFile
 	CodeRenameFile
 	CodeMoveFile
+
+	CodeCrateApp
+	CodeQueryApp
+	CodeDownloadApp
 )

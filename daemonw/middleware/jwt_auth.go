@@ -54,7 +54,8 @@ func verifyToken(tokenStr string) (*jwt.Token, error) {
 			return []byte(pass), nil
 		}
 		uid, _ := strconv.ParseUint(claims.Id, 10, 64)
-		user, err := dao.UserDao.Get(uid)
+		userDao:=dao.NewUserDao()
+		user, err := userDao.Get(uid)
 		if err != nil {
 			//internal error
 			panic(err)

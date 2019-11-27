@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"daemonw/router"
 	"daemonw/conf"
+	"daemonw/controller"
 	"daemonw/dao"
+	"daemonw/router"
 	"daemonw/xlog"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -62,4 +65,14 @@ func listenShutdownSignal(srv *http.Server) {
 	if err := srv.Shutdown(ctx); err != nil {
 		xlog.Error().Err(err).Msg("shutdown server error")
 	}
+}
+
+func main1(){
+	apkFile:="/home/daemonw/Desktop/Apps/APKPure_v3.13.2_apkpure.com.apk"
+	app,err:=controller.ParseApkFromFile(apkFile)
+	if err!=nil{
+		log.Fatal(err)
+	}
+	fmt.Println(app)
+
 }

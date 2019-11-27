@@ -23,7 +23,8 @@ func CreateFile(c *gin.Context) {
 	if file.ParentId < 0 {
 		file.ParentId = 0;
 	}
-	err := dao.FileDao.CreateFile(file)
+	fileDao:=dao.NewFileDao()
+	err := fileDao.CreateFile(file)
 	if err != nil {
 		xlog.Error().Msgf("create file failed, reason: %s", err.Error())
 		c.JSON(http.StatusInternalServerError, entity.NewRespErr(xerr.CodeCreateFile, xerr.MsgBadParam))

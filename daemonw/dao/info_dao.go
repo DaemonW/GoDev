@@ -9,8 +9,8 @@ type userInfoDao struct {
 	*baseDao
 }
 
-func newUserInfoDao() *userInfoDao {
-	return &userInfoDao{newBaseDao()}
+func NewUserInfoDao() *userInfoDao {
+	return &userInfoDao{NewDao()}
 }
 
 func (dao *userInfoDao) Get(id uint64) (*User, error) {

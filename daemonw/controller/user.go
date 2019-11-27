@@ -25,12 +25,13 @@ func GetUsers(c *gin.Context) {
 		c.JSON(http.StatusOK, NewResp().AddResult("users", nil))
 		return
 	}
+	userDao := dao.NewUserDao()
 	if name == "*" {
 		role := c.MustGet("role").(uint8)
 		if role == UserRoleNormal {
 			c.JSON(http.StatusOK, NewResp().AddResult("users", nil))
 		} else if role == UserRoleAdmin {
-			users, err := dao.UserDao.GetAll()
+			users, err := userDao.GetAll()
 			if err != nil {
 				xlog.Panic().Msg(util.StackInfo())
 				c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
@@ -40,7 +41,7 @@ func GetUsers(c *gin.Context) {
 		}
 		return
 	}
-	users, err := dao.UserDao.GetLikeName(name)
+	users, err := userDao.GetLikeName(name)
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
@@ -55,8 +56,8 @@ func GetUser(c *gin.Context) {
 		c.JSON(http.StatusNotFound, NewRespErr(xerr.CodeQueryUser, xerr.MsgUserNotExist))
 		return
 	}
-
-	users, err := dao.UserDao.Get(id)
+	userDao := dao.NewUserDao()
+	users, err := userDao.Get(id)
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
@@ -81,7 +82,8 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	user := NewUser(registerUser.Username, registerUser.Password)
-	qUser, err := dao.UserDao.GetByName(registerUser.Username)
+	userDao := dao.NewUserDao()
+	qUser, err := userDao.GetByName(registerUser.Username)
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
@@ -91,7 +93,7 @@ func CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewResp().WithErrMsg(xerr.CodeCreateUser, xerr.MsgUserExist))
 		return
 	}
-	if err = dao.UserDao.CreateUser(user); err != nil {
+	if err = userDao.CreateUser(user); err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeCreateUser, xerr.MsgCreateUserFail))
 	} else {
@@ -117,7 +119,8 @@ func UpdateUser(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeUpdateUser, xerr.MsgIllegalRequestCode))
 			return
 		}
-		u, err := dao.UserDao.Get(id)
+		userDao := dao.NewUserDao()
+		u, err := userDao.Get(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 			return
@@ -163,7 +166,8 @@ func updateUserStatus(user *User, newStatus uint8, code string, isAdmin bool) *x
 			}
 		}
 	}
-	err := dao.UserDao.UpdateStatus(user.Id, newStatus)
+	userDao := dao.NewUserDao()
+	err := userDao.UpdateStatus(user.Id, newStatus)
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 		return &xerr.Err{xerr.CodeInternal, xerr.MsgInternal}
@@ -181,7 +185,8 @@ func DeleteUser(c *gin.Context) {
 	if id <= 0 {
 		return
 	}
-	err := dao.UserDao.DeleteUser(id)
+	userDao := dao.NewUserDao()
+	err := userDao.DeleteUser(id)
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))

@@ -47,4 +47,9 @@ func initUserRouter(r *gin.Engine) {
 	fileRouter := r.Group("")
 	fileRouter.Use(middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1))
 	fileRouter.POST("/api/users/:id/files", controller.CreateFile)
+
+	appRouter := r.Group("")
+	appRouter.POST("/api/apps", controller.CreateApp)
+	appRouter.POST("api/app", controller.QueryApp)
+	appRouter.GET("/api/app/download", controller.DownloadApp)
 }

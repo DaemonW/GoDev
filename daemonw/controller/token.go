@@ -26,8 +26,8 @@ func GenToken(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeLogin, err.Error()))
 		return
 	}
-
-	u, err := dao.UserDao.GetByName(loginUser.Username)
+	userDao:=dao.NewUserDao()
+	u, err := userDao.GetByName(loginUser.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, NewRespErr(xerr.CodeInternal, xerr.MsgInternal))
 		return
