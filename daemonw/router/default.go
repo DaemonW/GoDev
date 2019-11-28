@@ -50,6 +50,6 @@ func initUserRouter(r *gin.Engine) {
 
 	appRouter := r.Group("")
 	appRouter.POST("/api/apps", controller.CreateApp)
-	appRouter.POST("api/app", controller.QueryApp)
-	appRouter.GET("/api/app/download", controller.DownloadApp)
+	appRouter.GET("api/apps", controller.QueryApps)
+	appRouter.GET("/api/app/:id/downloads", controller.DownloadApp)
 }

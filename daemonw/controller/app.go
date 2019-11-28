@@ -7,6 +7,7 @@ import (
 	"daemonw/entity"
 	"daemonw/util"
 	"daemonw/xerr"
+	"daemonw/xlog"
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -128,29 +129,65 @@ func insertApp(app *entity.App) (exist bool, err error) {
 	return false, nil
 }
 
-func QueryApp(c *gin.Context) {
+func QueryApps(c *gin.Context) {
 	uuid := c.Query("uuid")
 	if uuid == "" {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
 		return
 	}
-	appId := c.Query("app_id")
+	latest, _ := strconv.ParseBool(c.Query("latest"))
+	app_id := c.Query("app_id")
 	appDao := dao.NewAppDao()
-	if appId == "" {
-		apps, err := appDao.GetAllApps()
+	//查询所有app
+	if !latest {
+		var apps []entity.App
+		var err error
+		if app_id != "" {
+			apps, err = appDao.GetAllApp(app_id)
+		} else {
+			apps, err = appDao.GetAllApps()
+		}
 		util.PanicIfErr(err)
+		fillAppUrl(uuid, apps)
 		c.JSON(http.StatusOK, entity.NewResp().AddResult("apps", apps))
 		return
 	} else {
-		version := c.Query("version")
-		if version == "" {
-			c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal app version"))
+		if app_id != "" {
+			app, err := appDao.GetLatestApp(app_id)
+			util.PanicIfErr(err)
+			fillAppUrl(uuid, app)
+			c.JSON(http.StatusOK, entity.NewResp().AddResult("apps", app))
+		} else {
+			apps, err := appDao.GetLatestApps()
+			util.PanicIfErr(err)
+			fillAppUrl(uuid, apps)
+			c.JSON(http.StatusOK, entity.NewResp().AddResult("apps", apps))
+		}
+		return
+	}
+}
+
+func fillAppUrl(uuid string, apps []entity.App) {
+	if apps == nil {
+		return
+	}
+	verifyCode := dao.Redis().Get("app:" + uuid).Val()
+	if verifyCode == "" {
+		verifyCode = util.RandomCharacters(32)
+		success, err := dao.Redis().SetNX("app:"+uuid, verifyCode, time.Minute*30).Result()
+		util.PanicIfErr(err)
+		if !success {
+			xlog.Error().Msg("generate app download verify code failed")
 			return
 		}
-		app, err := appDao.GetApp(appId, version)
-		util.PanicIfErr(err)
-		c.JSON(http.StatusOK, entity.NewResp().AddResult("app", app))
-		return
+	}
+	c := conf.Config
+	protol := "https"
+	if !c.TLS {
+		protol = "http"
+	}
+	for i := 0; i < len(apps); i++ {
+		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/app/%d/downloads?uuid=%s&c=%s`, protol, c.Domain, c.Port, apps[i].Id, uuid, verifyCode)
 	}
 }
 
@@ -160,28 +197,30 @@ func DownloadApp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
 		return
 	}
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
+		return
+	}
 	verifyCode := c.Query("c")
 	if verifyCode == "" {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeDownloadApp, "illegal request"))
 		return
 	}
-	appId := c.Query("app_id")
-	version := c.Query("version")
-	name := c.Query("name")
-	code := dao.Redis().Get(appId + ":" + version).String()
+	code := dao.Redis().Get("app:" + uuid).Val()
 	if verifyCode != code {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeDownloadApp, "illegal request"))
 		return
 	}
 	appDao := dao.NewAppDao()
-	app, err := appDao.GetApp(appId, version)
+	app, err := appDao.GetAppById(id)
 	util.PanicIfErr(err)
 	if app == nil {
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
 		return
 	}
-	dir := filepath.Join(conf.Config.Data, appId, version)
-	filePath := dir + "/" + name
+	dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
+	filePath := dir + "/" + app.Name + ".apk"
 	if !util.ExistFile(filePath) {
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
 		return

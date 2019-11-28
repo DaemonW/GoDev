@@ -13,7 +13,7 @@ tlsCert = ""
 tlsKey = ""
 
 ### domain name of the service endpoint
-domain = "example.com"
+domain = "192.168.21.41"
 
 ### listen port of the service
 port = 8080
