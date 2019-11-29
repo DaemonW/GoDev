@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/shogo82148/androidbinary/apk"
+	"image"
+	"image/png"
 	"io"
 	"net/http"
 	"os"
@@ -53,7 +55,7 @@ func CreateApp(c *gin.Context) {
 	_, err = io.Copy(f, r)
 	util.PanicIfErr(err)
 
-	app, err := ParseApkFromFile(tempFile)
+	app, icon, err := ParseApkFromFile(tempFile)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "parse apk file failed"))
 		os.Remove(tempFile)
@@ -68,6 +70,14 @@ func CreateApp(c *gin.Context) {
 	filePath := dir + "/" + app.Name + ".apk"
 	err = os.Rename(tempFile, filePath)
 	util.PanicIfErr(err)
+	if icon != nil {
+		iconFile := dir + "/icon.png"
+		f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
+		if err == nil {
+			defer f.Close()
+			png.Encode(f, icon)
+		}
+	}
 	h, err := crypto.GetFileHash(filePath, "MD5")
 	util.PanicIfErr(err)
 	app.Hash = util.Bytes2HexStr(h)
@@ -187,7 +197,10 @@ func fillAppUrl(uuid string, apps []entity.App) {
 		protol = "http"
 	}
 	for i := 0; i < len(apps); i++ {
-		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/app/%d/downloads?uuid=%s&c=%s`, protol, c.Domain, c.Port, apps[i].Id, uuid, verifyCode)
+		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/%s.apk?uuid=%s&c=%s`,
+			protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, apps[i].Name, uuid, verifyCode)
+		apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/icon.png?uuid=%s&c=%s`,
+			protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
 	}
 }
 
@@ -232,25 +245,30 @@ func DownloadApp(c *gin.Context) {
 	}
 }
 
-func ParseApkFromReader(r io.ReaderAt, size int64) (*entity.App, error) {
+func ParseApkFromReader(r io.ReaderAt, size int64) (*entity.App, image.Image, error) {
 	Apk, err := apk.OpenZipReader(r, size)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	var icon image.Image
 	app := &entity.App{}
 	app.AppId = Apk.PackageName()
+	icon, err = Apk.Icon(nil)
+	if err != nil {
+		icon = nil
+	}
 	manifest := Apk.Manifest()
 	app.Name, _ = Apk.Label(nil)
 	app.Version = manifest.VersionName.MustString()
 	app.VersionCode = manifest.VersionCode.MustInt32()
 	app.Size = size
-	return app, nil
+	return app, icon, nil
 }
 
-func ParseApkFromFile(filePath string) (*entity.App, error) {
+func ParseApkFromFile(filePath string) (*entity.App, image.Image, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer f.Close()
 	fi, _ := f.Stat()

@@ -6,6 +6,7 @@ type App struct {
 	Version     string `db:"version"`
 	VersionCode int32  `db:"version_code"`
 	Name        string `db:"name"`
+	Icon        string `db:"icon"`
 	Size        int64  `db:"size"`
 	Hash        string `db:"hash"`
 	Encrypted   bool   `db:"encrypted"`
@@ -14,5 +15,5 @@ type App struct {
 
 type Update struct {
 	AppId  string `db:"app_id"`
-	Latest int32 `db:"latest"`
+	Latest int32  `db:"latest"`
 }

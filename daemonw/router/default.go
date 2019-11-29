@@ -1,6 +1,7 @@
 package router
 
 import (
+	"daemonw/conf"
 	"daemonw/controller"
 	"daemonw/dao"
 	"daemonw/entity"
@@ -39,17 +40,23 @@ func initUserRouter(r *gin.Engine) {
 	authRouter := r.Group("")
 	authRouter.Use(middleware.JwtAuth())
 	authRouter.Use(middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1))
-	authRouter.GET("/api/users/:id", controller.GetUser)
+	authRouter.GET("/api/user/:id", controller.GetUser)
 	authRouter.GET("/api/users", controller.GetUsers)
-	authRouter.PUT("/api/users/:id", controller.UpdateUser)
-	authRouter.DELETE("/api/users/:id", controller.DeleteUser)
+	authRouter.PUT("/api/user/:id", controller.UpdateUser)
+	authRouter.DELETE("/api/user/:id", controller.DeleteUser)
 
 	fileRouter := r.Group("")
 	fileRouter.Use(middleware.RateLimiter(entity.NewLimiter(*dao.Redis()), 1))
-	fileRouter.POST("/api/users/:id/files", controller.CreateFile)
+	fileRouter.POST("/api/user/:id/files", controller.CreateFile)
+
+	appAdminRouter := r.Group("")
+	appAdminRouter.POST("/api/admin/apps", controller.CreateApp)
 
 	appRouter := r.Group("")
-	appRouter.POST("/api/apps", controller.CreateApp)
 	appRouter.GET("api/apps", controller.QueryApps)
 	appRouter.GET("/api/app/:id/downloads", controller.DownloadApp)
+
+	resRouter := r.Group("")
+	resRouter.Use(middleware.ResourceAuth())
+	resRouter.Static("/api/resource/app/downloads", conf.Config.Data)
 }

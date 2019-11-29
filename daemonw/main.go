@@ -67,10 +67,10 @@ func listenShutdownSignal(srv *http.Server) {
 	}
 }
 
-func main1(){
-	apkFile:="/home/daemonw/Desktop/Apps/APKPure_v3.13.2_apkpure.com.apk"
-	app,err:=controller.ParseApkFromFile(apkFile)
-	if err!=nil{
+func main1() {
+	apkFile := "/home/daemonw/Desktop/Apps/APKPure_v3.13.2_apkpure.com.apk"
+	app, _, err := controller.ParseApkFromFile(apkFile)
+	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(app)
