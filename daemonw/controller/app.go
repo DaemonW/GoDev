@@ -41,8 +41,9 @@ func CreateApp(c *gin.Context) {
 		return
 	}
 	encrypted := c.PostForm("encrypted")
+	name := c.PostForm("name")
 	enc, _ := strconv.ParseBool(encrypted)
-	r, _, err := c.Request.FormFile("data")
+	r, _, err := c.Request.FormFile("apk")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "parse file data failed"))
 		return
@@ -61,6 +62,9 @@ func CreateApp(c *gin.Context) {
 		os.Remove(tempFile)
 		return
 	}
+	if app.Name == "" {
+		app.Name = name
+	}
 	app.Encrypted = enc
 	dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
 	if !util.ExistFile(dir) {
@@ -76,6 +80,21 @@ func CreateApp(c *gin.Context) {
 		if err == nil {
 			defer f.Close()
 			png.Encode(f, icon)
+		}
+	} else {
+		r, _, err := c.Request.FormFile("icon")
+		if err != nil {
+			if err != http.ErrMissingFile {
+				c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "parse icon data failed"))
+				return
+			}
+		} else {
+			iconFile := dir + "/icon.png"
+			f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
+			if err == nil {
+				defer f.Close()
+				io.Copy(f, r)
+			}
 		}
 	}
 	h, err := crypto.GetFileHash(filePath, "MD5")
