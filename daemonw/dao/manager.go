@@ -37,7 +37,7 @@ func initDB() {
 }
 
 func initUser() {
-	admin := entity.NewUser("admin", "admin")
+	admin := entity.NewUser("administrator", "admin@123")
 	admin.Status = entity.UserStatusNormal
 	admin.Role = entity.UserRoleAdmin
 	userDao := NewUserDao()
