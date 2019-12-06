@@ -25,5 +25,7 @@ const (
 
 	CodeCrateApp
 	CodeQueryApp
+	CodeDeleteApp
+	CodeUpdateApp
 	CodeDownloadApp
 )

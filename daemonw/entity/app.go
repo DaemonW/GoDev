@@ -1,7 +1,7 @@
 package entity
 
 type App struct {
-	Id          uint64 `db:"id" json:"-"`
+	Id          uint64 `db:"id"`
 	AppId       string `db:"app_id"`
 	Version     string `db:"version"`
 	VersionCode int32  `db:"version_code"`

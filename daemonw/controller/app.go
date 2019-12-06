@@ -30,11 +30,14 @@ var (
 )
 
 func CreateApp(c *gin.Context) {
-	if t := c.Request.Header.Get("Content-Type"); !strings.HasPrefix(t, gin.MIMEMultipartPOSTForm) {
+	t := c.Request.Header.Get("Content-Type")
+	if !strings.HasPrefix(t, gin.MIMEMultipartPOSTForm) {
 		fmt.Println(t)
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "unacceptable content type"))
 		return
 	}
+	//b, _ := ioutil.ReadAll(c.Request.Body)
+	//fmt.Println(string(b))
 	err := c.Request.ParseMultipartForm(32 << 20)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, entity.NewRespErr(xerr.CodeCrateApp, "parse multipart body failed"))
@@ -118,17 +121,24 @@ func insertApp(app *entity.App) (exist bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	existApp := &entity.Update{}
-	smt := `SELECT apps.app_id, updates.latest FROM apps LEFT JOIN updates ON apps.app_id=updates.app_id WHERE updates.app_id=?`
-	err = daoConn.Get(existApp, smt, app.AppId)
-	if err != nil && err != sql.ErrNoRows {
-		daoConn.RollBack()
-		return false, err
+	existApp := &entity.App{}
+	smt := `SELECT * from apps WHERE app_id=? AND version_code=?`
+	err = daoConn.Get(existApp, smt, app.AppId, app.VersionCode)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			existApp = nil
+		} else {
+			daoConn.RollBack()
+			return false, err
+		}
 	}
-	if existApp != nil && existApp.AppId != "" {
+	//if exist,return
+	if existApp != nil {
 		daoConn.RollBack()
 		return true, nil
 	}
+
+	//insert new app and version
 	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url)
 						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url)`
 	_, err = daoConn.CreateObj(smt, app)
@@ -137,15 +147,20 @@ func insertApp(app *entity.App) (exist bool, err error) {
 		return false, err
 	}
 
-	//need update latest app version
-	latestApp := &entity.Update{app.AppId, app.VersionCode}
-	if existApp.Latest <= 0 {
-		smt := `INSERT INTO updates(app_id,latest) VALUES (:app_id,:latest)`
-		_, err = daoConn.CreateObj(smt, latestApp)
-	} else if app.VersionCode > existApp.Latest {
-		smt := `UPDATE updates SET latest=:latest WHERE updates.app_id=':app_id'`
-		_, err = daoConn.UpdateObj(smt, latestApp)
+	var latest int32 = -1
+	err = daoConn.Get(&latest, `SELECT COALESCE(MAX(version_code),-1) from apps WHERE app_id=?`, app.AppId)
+	if err != nil {
+		daoConn.RollBack()
+		return false, err
 	}
+
+	if app.VersionCode > latest {
+		latest = app.VersionCode
+	}
+	//need update latest app version
+	smt = `INSERT INTO updates(app_id,latest) VALUES (?,?) ON CONFLICT(app_id) DO UPDATE SET latest=?`
+	_, err = daoConn.Create(smt, app.AppId, latest, latest)
+
 	if err != nil {
 		daoConn.RollBack()
 		return false, err
@@ -218,8 +233,13 @@ func fillAppUrl(uuid string, apps []entity.App) {
 	for i := 0; i < len(apps); i++ {
 		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/%s.apk?uuid=%s&c=%s`,
 			protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, apps[i].Name, uuid, verifyCode)
-		apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/icon.png?uuid=%s&c=%s`,
-			protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
+		dir := filepath.Join(conf.Config.Data, apps[i].AppId, apps[i].Version)
+		if !util.ExistFile(dir + `/icon.png`) {
+			apps[i].Icon = "";
+		} else {
+			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/icon.png?uuid=%s&c=%s`,
+				protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
+		}
 	}
 }
 
@@ -262,6 +282,163 @@ func DownloadApp(c *gin.Context) {
 	} else {
 		c.File(filePath)
 	}
+}
+
+func DeleteApp(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeDeleteApp, "illegal request"))
+		return
+	}
+	appDao := dao.NewAppDao()
+	err = appDao.BeginTx()
+	util.PanicIfErr(err)
+	app, err := appDao.GetAppById(id)
+	if err != nil {
+		appDao.RollBack();
+		panic(err)
+	}
+	if app == nil {
+		return
+	}
+	err = appDao.DeleteApp(app.AppId, app.Version)
+	if err != nil {
+		appDao.RollBack();
+		panic(err)
+	}
+	latest := -1
+	err = appDao.Get(&latest, `SELECT COALESCE(MAX(version_code),-1) FROM apps WHERE app_id=?`, app.AppId)
+	if err != nil {
+		appDao.RollBack();
+		panic(err)
+	}
+	if latest == -1 {
+		_, err = appDao.Delete(`DELETE FROM updates WHERE app_id=?`, app.AppId)
+		if err != nil {
+			appDao.RollBack();
+			panic(err)
+		}
+	} else {
+		_, err = appDao.Exec(`UPDATE updates SET latest=? WHERE app_id=?`, latest, app.AppId)
+		if err != nil {
+			appDao.RollBack();
+			panic(err)
+		}
+	}
+	dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
+	//err = os.Remove(dir + "/" + app.Name + ".apk")
+	err = os.RemoveAll(dir)
+	if err != nil {
+		appDao.RollBack();
+		panic(err)
+	}
+	err = appDao.Commit()
+	if err != nil {
+		appDao.RollBack();
+		panic(err)
+	}
+	c.JSON(http.StatusOK, entity.NewResp().AddResult("msg", "delete app success"))
+}
+
+const (
+	ScopeIcon      = "icon"
+	ScopeName      = "name"
+	ScopeEncrypted = "encrypted"
+)
+
+func UpdateApp(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeUpdateApp, "illegal request"))
+		return
+	}
+	appDao := dao.NewAppDao()
+	err = appDao.BeginTx()
+	util.PanicIfErr(err)
+	app, err := appDao.GetAppById(id)
+	if err != nil {
+		appDao.RollBack();
+		panic(err)
+	}
+	if app == nil {
+		appDao.Commit()
+		return
+	}
+	_s := c.Query("scope")
+	scopes := strings.Split(_s, ",")
+	var name string
+	var encrypted bool
+
+	if hasScope(scopes, ScopeIcon) {
+		err = c.Request.ParseMultipartForm(32 << 20)
+		if err != nil {
+			appDao.RollBack()
+			xlog.Error().Msgf("err: %s", err.Error())
+			c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeUpdateApp, "parse icon file failed"))
+			return
+		}
+		r, _, err := c.Request.FormFile("icon")
+		if err != nil {
+			appDao.RollBack()
+			xlog.Error().Msgf("err: %s", err.Error())
+			c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeUpdateApp, "parse icon file failed"))
+			return
+		}
+		defer r.Close()
+		dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
+		iconFile := dir + "/icon.png"
+		f, err := os.OpenFile(iconFile, os.O_RDWR|os.O_CREATE, os.ModePerm)
+		if err != nil {
+			appDao.RollBack()
+			xlog.Error().Msgf("err: %s", err.Error())
+			c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeUpdateApp, "update icon failed"))
+			return
+		}
+		defer f.Close()
+		_, err = io.Copy(f, r)
+		if err != nil {
+			appDao.RollBack()
+			os.Remove(iconFile)
+			panic(err)
+		}
+	}
+
+	if hasScope(scopes, ScopeName) {
+		name = c.PostForm("name")
+		_, err := appDao.Exec(`UPDATE apps SET name=? WHERE id=?`, name, app.Id)
+		if err != nil {
+			appDao.RollBack()
+			panic(err)
+		}
+	}
+
+	if hasScope(scopes, ScopeEncrypted) {
+		encrypted, _ = strconv.ParseBool(c.PostForm("encrypted"))
+		_, err := appDao.Exec(`UPDATE apps SET encrypted=? WHERE id=?`, encrypted, app.Id)
+		if err != nil {
+			appDao.RollBack()
+			panic(err)
+		}
+	}
+	err = appDao.Commit()
+	if err != nil {
+		appDao.RollBack()
+		panic(err)
+	}
+	c.JSON(http.StatusOK, entity.NewResp().AddResult("msg", "update app success"))
+
+}
+
+func hasScope(scopes []string, scope string) bool {
+	if scopes == nil || len(scopes) == 0 {
+		return false
+	}
+	for _, s := range scopes {
+		if s == scope {
+			return true;
+		}
+	}
+	return false
 }
 
 func ParseApkFromReader(r io.ReaderAt, size int64) (*entity.App, image.Image, error) {

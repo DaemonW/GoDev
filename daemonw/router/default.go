@@ -54,11 +54,12 @@ func initUserRouter(r *gin.Engine) {
 
 	appAdminRouter := r.Group("")
 	appAdminRouter.POST("/api/admin/apps", controller.CreateApp)
+	appAdminRouter.DELETE("/api/admin/app/:id", controller.DeleteApp)
 
 	appRouter := r.Group("")
 	appRouter.GET("/api/apps", controller.QueryApps)
 	appRouter.GET("/api/app/:id/downloads", controller.DownloadApp)
-	fmt.Println(filepath.Dir(conf.Config.Data)+"/web")
+	fmt.Println(filepath.Dir(conf.Config.Data) + "/web")
 	appRouter.Static("/api/static", filepath.Dir(conf.Config.Data)+"/web")
 
 	resRouter := r.Group("")
