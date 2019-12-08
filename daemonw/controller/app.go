@@ -139,8 +139,9 @@ func insertApp(app *entity.App) (exist bool, err error) {
 	}
 
 	//insert new app and version
-	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url)
-						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url)`
+	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url,create_at)
+						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url,:create_at)`
+	app.CreateAt = time.Now()
 	_, err = daoConn.CreateObj(smt, app)
 	if err != nil {
 		daoConn.RollBack()
@@ -235,7 +236,7 @@ func fillAppUrl(uuid string, apps []entity.App) {
 			protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, apps[i].Name, uuid, verifyCode)
 		dir := filepath.Join(conf.Config.Data, apps[i].AppId, apps[i].Version)
 		if !util.ExistFile(dir + `/icon.png`) {
-			apps[i].Icon = "";
+			apps[i].Icon = ""
 		} else {
 			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/icon.png?uuid=%s&c=%s`,
 				protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
@@ -295,7 +296,7 @@ func DeleteApp(c *gin.Context) {
 	util.PanicIfErr(err)
 	app, err := appDao.GetAppById(id)
 	if err != nil {
-		appDao.RollBack();
+		appDao.RollBack()
 		panic(err)
 	}
 	if app == nil {
@@ -303,25 +304,25 @@ func DeleteApp(c *gin.Context) {
 	}
 	err = appDao.DeleteApp(app.AppId, app.Version)
 	if err != nil {
-		appDao.RollBack();
+		appDao.RollBack()
 		panic(err)
 	}
 	latest := -1
 	err = appDao.Get(&latest, `SELECT COALESCE(MAX(version_code),-1) FROM apps WHERE app_id=?`, app.AppId)
 	if err != nil {
-		appDao.RollBack();
+		appDao.RollBack()
 		panic(err)
 	}
 	if latest == -1 {
 		_, err = appDao.Delete(`DELETE FROM updates WHERE app_id=?`, app.AppId)
 		if err != nil {
-			appDao.RollBack();
+			appDao.RollBack()
 			panic(err)
 		}
 	} else {
 		_, err = appDao.Exec(`UPDATE updates SET latest=? WHERE app_id=?`, latest, app.AppId)
 		if err != nil {
-			appDao.RollBack();
+			appDao.RollBack()
 			panic(err)
 		}
 	}
@@ -329,12 +330,12 @@ func DeleteApp(c *gin.Context) {
 	//err = os.Remove(dir + "/" + app.Name + ".apk")
 	err = os.RemoveAll(dir)
 	if err != nil {
-		appDao.RollBack();
+		appDao.RollBack()
 		panic(err)
 	}
 	err = appDao.Commit()
 	if err != nil {
-		appDao.RollBack();
+		appDao.RollBack()
 		panic(err)
 	}
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("msg", "delete app success"))
@@ -357,7 +358,7 @@ func UpdateApp(c *gin.Context) {
 	util.PanicIfErr(err)
 	app, err := appDao.GetAppById(id)
 	if err != nil {
-		appDao.RollBack();
+		appDao.RollBack()
 		panic(err)
 	}
 	if app == nil {
@@ -435,7 +436,7 @@ func hasScope(scopes []string, scope string) bool {
 	}
 	for _, s := range scopes {
 		if s == scope {
-			return true;
+			return true
 		}
 	}
 	return false

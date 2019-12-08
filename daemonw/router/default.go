@@ -55,6 +55,7 @@ func initUserRouter(r *gin.Engine) {
 	appAdminRouter := r.Group("")
 	appAdminRouter.POST("/api/admin/apps", controller.CreateApp)
 	appAdminRouter.DELETE("/api/admin/app/:id", controller.DeleteApp)
+	appAdminRouter.PUT("api/admin/app/:id",controller.UpdateApp)
 
 	appRouter := r.Group("")
 	appRouter.GET("/api/apps", controller.QueryApps)

@@ -14,8 +14,8 @@ func NewAppDao() *appDao {
 }
 
 func (dao *appDao) CreateApp(app *App) error {
-	smt := `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url) 
-			VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url)
+	smt := `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url,create_at) 
+			VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url,:created_at)
 			RETURNING id`
 	_, err := dao.CreateObj(smt, app)
 	return err
