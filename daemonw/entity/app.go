@@ -20,3 +20,11 @@ type Update struct {
 	AppId  string `db:"app_id"`
 	Latest int32  `db:"latest"`
 }
+
+type AppInfo struct {
+	Package     string
+	Version     string
+	Description string
+	ChangeLog   string
+	ImageUrls   []string
+}

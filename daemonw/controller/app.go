@@ -119,6 +119,7 @@ func CreateApp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "apk already exist"))
 		return
 	}
+	AppInfoSpiderChan <- app.AppId
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("app", app))
 }
 

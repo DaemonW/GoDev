@@ -9,7 +9,6 @@ import (
 	"daemonw/router"
 	"daemonw/xlog"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,7 +17,7 @@ import (
 	"time"
 )
 
-func main() {
+func main1() {
 	conf.InitConfig()
 	xlog.InitLog()
 	dao.InitDao()
@@ -67,12 +66,12 @@ func listenShutdownSignal(srv *http.Server) {
 	}
 }
 
-func main1() {
-	apkFile := "/home/daemonw/Desktop/Apps/APKPure_v3.13.2_apkpure.com.apk"
-	app, _, err := controller.ParseApkFromFile(apkFile)
+func main() {
+	spider := &controller.MiStoreSpider{}
+	apkInfo,err := spider.FetchApkInfo("com.tencent.mobileqq")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
-	fmt.Println(app)
-
+	fmt.Println(apkInfo)
 }
