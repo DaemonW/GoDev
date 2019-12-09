@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"crypto/cipher"
 	"daemonw/conf"
 	"daemonw/crypto"
 	"daemonw/dao"
@@ -11,10 +12,12 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/shogo82148/androidbinary/apk"
 	"image"
 	"image/png"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -75,8 +78,12 @@ func CreateApp(c *gin.Context) {
 		util.PanicIfErr(err)
 	}
 	filePath := dir + "/" + app.Name + ".apk"
-	err = os.Rename(tempFile, filePath)
-	util.PanicIfErr(err)
+	//err = os.Rename(tempFile, filePath)
+	err = encryptApp(tempFile, filePath)
+	if err != nil {
+		os.Remove(tempFile)
+		panic(err)
+	}
 	if icon != nil {
 		iconFile := dir + "/icon.png"
 		f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
@@ -113,6 +120,45 @@ func CreateApp(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("app", app))
+}
+
+func encryptApp(originPath, newPath string) error {
+	r, err := os.OpenFile(originPath, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	w, err := os.OpenFile(newPath, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	keyIv := crypto.RandomBytes(48)
+	b, err := ioutil.ReadFile(conf.Config.RSAPublic)
+	if err != nil {
+		return err
+	}
+	b, err = util.HexStr2Bytes(string(b))
+	if err != nil {
+		panic(err)
+	}
+	publicKey, err := crypto.ParsePublicKey(b)
+	if err != nil {
+		return err
+	}
+	encKeyIv, err := crypto.RsaEnc(publicKey, keyIv)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(encKeyIv)
+	if err != nil {
+		return err
+	}
+	success := crypto.AesStream(r, w, keyIv[:32], keyIv[32:], "CTR", true)
+	if !success {
+		return errors.New("encrypt file failed")
+	}
+	return nil
 }
 
 func insertApp(app *entity.App) (exist bool, err error) {
@@ -232,14 +278,14 @@ func fillAppUrl(uuid string, apps []entity.App) {
 		protol = "http"
 	}
 	for i := 0; i < len(apps); i++ {
-		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/%s.apk?uuid=%s&c=%s`,
-			protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, apps[i].Name, uuid, verifyCode)
+		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/download/app/%d/resources/%s.apk?uuid=%s&c=%s`,
+			protol, c.Domain, c.Port, apps[i].Id, apps[i].Name, uuid, verifyCode)
 		dir := filepath.Join(conf.Config.Data, apps[i].AppId, apps[i].Version)
 		if !util.ExistFile(dir + `/icon.png`) {
 			apps[i].Icon = ""
 		} else {
-			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/resource/app/downloads/%s/%s/icon.png?uuid=%s&c=%s`,
-				protol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
+			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/download/app/%d/resources/icon.png?uuid=%s&c=%s`,
+				protol, c.Domain, c.Port, apps[i].Id, uuid, verifyCode)
 		}
 	}
 }
@@ -247,11 +293,6 @@ func fillAppUrl(uuid string, apps []entity.App) {
 func DownloadApp(c *gin.Context) {
 	uuid := c.Query("uuid")
 	if uuid == "" {
-		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
-		return
-	}
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
 		return
 	}
@@ -265,6 +306,11 @@ func DownloadApp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeDownloadApp, "illegal request"))
 		return
 	}
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
+		return
+	}
 	appDao := dao.NewAppDao()
 	app, err := appDao.GetAppById(id)
 	util.PanicIfErr(err)
@@ -272,16 +318,55 @@ func DownloadApp(c *gin.Context) {
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
 		return
 	}
-	dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
-	filePath := dir + "/" + app.Name + ".apk"
+	path := c.Param("path")
+	filePath := filepath.Join(conf.Config.Data, app.AppId, app.Version, path)
 	if !util.ExistFile(filePath) {
-		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
+		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "resource not found"))
 		return
+	}
+	if strings.HasSuffix(path, ".apk") {
+		c.Writer.Header().Set("Content-Type", "application/vnd.android.package-archive")
 	}
 	if app.Encrypted {
 		c.File(filePath)
 	} else {
-		c.File(filePath)
+		fr, err := os.Open(filePath)
+		if err != nil {
+			panic(err)
+		}
+		defer fr.Close()
+		lr := &io.LimitedReader{fr, 256}
+		encKeyIv, err := ioutil.ReadAll(lr)
+		if err != nil {
+			panic(err)
+		}
+		pr, err := os.Open(conf.Config.RSAPrivate)
+		if err != nil {
+			panic(err)
+		}
+		defer pr.Close()
+		b, err := ioutil.ReadAll(pr)
+		if err != nil {
+			panic(err)
+		}
+		b, err = util.HexStr2Bytes(string(b))
+		if err != nil {
+			panic(err)
+		}
+		privateKey, err := crypto.ParsePrivateKey(b)
+		if err != nil {
+			panic(err)
+		}
+		keyIv, err := crypto.RsaDec(privateKey, encKeyIv)
+		stream, err := crypto.CtrCipher(keyIv[:32], keyIv[32:])
+		if err != nil {
+			panic(err)
+		}
+		cr := cipher.StreamReader{stream, fr}
+		_, err = io.Copy(c.Writer, cr)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

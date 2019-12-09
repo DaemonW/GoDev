@@ -15,6 +15,12 @@ tlsKey = ""
 ### domain name of the service endpoint
 domain = "192.168.21.41"
 
+### RSA public key
+rsaPublic = "/home/daemonw/PKinfluence"
+
+### RSA private key
+rsaPrivate = "/home/daemonw/SKinfluence"
+
 ### listen port of the service
 port = 8080
 

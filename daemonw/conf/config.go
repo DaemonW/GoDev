@@ -16,6 +16,8 @@ type config struct {
 	TLSKey     string //server private key
 	TLS        bool
 	Domain     string
+	RSAPublic  string
+	RSAPrivate string
 	Port       int //port
 	LogDir     string
 	Data       string //dir to store the data

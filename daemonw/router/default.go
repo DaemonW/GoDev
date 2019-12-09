@@ -1,14 +1,11 @@
 package router
 
 import (
-	"daemonw/conf"
 	"daemonw/controller"
 	"daemonw/dao"
 	"daemonw/entity"
 	"daemonw/middleware"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"path/filepath"
 )
 
 var router *gin.Engine
@@ -55,15 +52,14 @@ func initUserRouter(r *gin.Engine) {
 	appAdminRouter := r.Group("")
 	appAdminRouter.POST("/api/admin/apps", controller.CreateApp)
 	appAdminRouter.DELETE("/api/admin/app/:id", controller.DeleteApp)
-	appAdminRouter.PUT("api/admin/app/:id",controller.UpdateApp)
+	appAdminRouter.PUT("api/admin/app/:id", controller.UpdateApp)
 
 	appRouter := r.Group("")
 	appRouter.GET("/api/apps", controller.QueryApps)
 	appRouter.GET("/api/app/:id/downloads", controller.DownloadApp)
-	fmt.Println(filepath.Dir(conf.Config.Data) + "/web")
-	appRouter.Static("/api/static", filepath.Dir(conf.Config.Data)+"/web")
+	appRouter.Static("/static", "/home/daemonw/SrcRepo/AppStore/build/web")
 
 	resRouter := r.Group("")
 	resRouter.Use(middleware.ResourceAuth())
-	resRouter.Static("/api/resource/app/downloads", conf.Config.Data)
+	resRouter.GET("/api/download/app/:id/resources/:path", controller.DownloadApp)
 }
