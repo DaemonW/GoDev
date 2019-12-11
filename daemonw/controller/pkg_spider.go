@@ -1,23 +1,29 @@
 package controller
 
 import (
+	"daemonw/dao"
 	"daemonw/entity"
-	"fmt"
+	"daemonw/xlog"
 	"github.com/PuerkitoBio/goquery"
+	"strings"
 )
 
 var (
-	AppInfoSpiderChan = make(chan string, 10)
+	AppInfoSpiderChan = make(chan entity.App, 10)
 )
 
 func init() {
 	go func() {
 		spider := &MiStoreSpider{}
 		for {
-			pkg := <-AppInfoSpiderChan
-			info, err := spider.FetchApkInfo(pkg)
-			if err == nil {
-				fmt.Println(info)
+			app := <-AppInfoSpiderChan
+			info, err := spider.FetchApkInfo(app.AppId)
+			if err == nil && info != nil {
+				db := dao.NewAppDao()
+				err := db.CreateAppInfo(info)
+				if err != nil {
+					xlog.Error().Msgf("err: %s", err.Error())
+				}
 			}
 		}
 	}()
@@ -51,12 +57,12 @@ func (spider *MiStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo, err
 			}
 		})
 	})
-	urls := make([]string, 6)
+	urls := strings.Builder{}
 	doc.Find("div#J_thumbnail_wrap").Each(func(i int, selection *goquery.Selection) {
 		selection.Find("img").Each(func(i int, selection *goquery.Selection) {
 			src, exist := selection.Attr("src")
 			if exist {
-				urls[i] = src
+				urls.WriteString(src + ",")
 			}
 		})
 	})
@@ -73,7 +79,7 @@ func (spider *MiStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo, err
 			})
 		})
 	})
-	appInfo.ImageUrls = urls;
+	appInfo.ImageDetail = urls.String();
 	return appInfo, nil
 }
 

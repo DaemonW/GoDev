@@ -112,6 +112,13 @@ func (dao *baseDao) NamedExec(sqlStatement string, args interface{}) (sql.Result
 	return dao.db.NamedExec(dao.db.Rebind(sqlStatement), args)
 }
 
+func (dao *baseDao) NamedQuery(sqlStatement string, args interface{}) (*sqlx.Rows, error) {
+	if dao.enableTx {
+		return dao.tx.NamedQuery(dao.tx.Rebind(sqlStatement), args)
+	}
+	return dao.db.NamedQuery(dao.db.Rebind(sqlStatement), args)
+}
+
 func subString(Str string, s, t int) string {
 	sub := []byte(Str)[s:t]
 	return string(sub)

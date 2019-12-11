@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func main1() {
+func main() {
 	conf.InitConfig()
 	xlog.InitLog()
 	dao.InitDao()
@@ -66,7 +66,7 @@ func listenShutdownSignal(srv *http.Server) {
 	}
 }
 
-func main() {
+func main1() {
 	spider := &controller.MiStoreSpider{}
 	apkInfo,err := spider.FetchApkInfo("com.tencent.mobileqq")
 	if err != nil {

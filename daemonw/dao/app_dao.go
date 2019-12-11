@@ -21,6 +21,14 @@ func (dao *appDao) CreateApp(app *App) error {
 	return err
 }
 
+func (dao *appDao) CreateAppInfo(app *AppInfo) error {
+	smt := `INSERT INTO app_infos(id,package,version,description,change_log,image_detail,language,country) 
+			VALUES (:id,:package,:version,:description,:change_log,:image_detail,:language,:country)
+			RETURNING id`
+	_, err := dao.CreateObj(smt, app)
+	return err
+}
+
 func (dao *appDao) GetApp(appId string, version string) (*App, error) {
 	app := &App{}
 	smt := `SELECT * FROM apps WHERE app_id=? AND version=?`

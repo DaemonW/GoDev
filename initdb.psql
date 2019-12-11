@@ -52,3 +52,14 @@ create TABLE updates (
       app_id varchar(256) PRIMARY KEY,
       latest int4 NOT NULL
 );
+
+create TABLE app_infos (
+      id bigint PRIMARY KEY,
+      package varchar(256) NOT NULL,
+      version varchar(256) NOT NULL,
+      description text,
+      change_log text,
+      image_detail text,
+      language text,
+      country text
+);

@@ -22,9 +22,12 @@ type Update struct {
 }
 
 type AppInfo struct {
-	Package     string
-	Version     string
-	Description string
-	ChangeLog   string
-	ImageUrls   []string
+	Id          uint64 `db:"id"`
+	Package     string `db:"package"`
+	Version     string `db:"version"`
+	Description string `db:"description"`
+	ChangeLog   string `db:"change_log"`
+	ImageDetail string `db:"image_detail"`
+	Language    string `db:"language"`
+	Country     string `db:"country"`
 }

@@ -119,7 +119,7 @@ func CreateApp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "apk already exist"))
 		return
 	}
-	AppInfoSpiderChan <- app.AppId
+	AppInfoSpiderChan <- *app
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("app", app))
 }
 
@@ -187,12 +187,16 @@ func insertApp(app *entity.App) (exist bool, err error) {
 
 	//insert new app and version
 	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url,create_at)
-						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url,:create_at)`
+						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url,:create_at) RETURNING id`
 	app.CreateAt = time.Now()
-	_, err = daoConn.CreateObj(smt, app)
+	rows, err := daoConn.NamedQuery(smt, app)
 	if err != nil {
 		daoConn.RollBack()
 		return false, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&app.Id)
+		util.PanicIfErr(err)
 	}
 
 	var latest int32 = -1

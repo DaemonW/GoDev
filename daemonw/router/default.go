@@ -57,6 +57,7 @@ func initUserRouter(r *gin.Engine) {
 	appRouter := r.Group("")
 	appRouter.GET("/api/apps", controller.QueryApps)
 	appRouter.GET("/api/app/:id/downloads", controller.DownloadApp)
+	appRouter.GET("/api/app/:id/details", controller.DownloadApp)
 	appRouter.Static("/static", "/home/daemonw/SrcRepo/AppStore/build/web")
 
 	resRouter := r.Group("")
