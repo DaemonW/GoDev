@@ -19,6 +19,7 @@ func init() {
 			app := <-AppInfoSpiderChan
 			info, err := spider.FetchApkInfo(app.AppId)
 			if err == nil && info != nil {
+				info.Id = app.Id
 				db := dao.NewAppDao()
 				err := db.CreateAppInfo(info)
 				if err != nil {
@@ -70,16 +71,16 @@ func (spider *MiStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo, err
 	doc.Find("div.details.preventDefault").Each(func(i int, selection *goquery.Selection) {
 		selection.Find("ul.cf").Each(func(i int, selection *goquery.Selection) {
 			selection.Find("li.weight-font").Each(func(i int, selection *goquery.Selection) {
-				if (i == 1) {
+				if i == 1 {
 					appInfo.Version = selection.Next().Text()
 				}
-				if (i == 3) {
+				if i == 3 {
 					appInfo.Package = selection.Next().Text()
 				}
 			})
 		})
 	})
-	appInfo.ImageDetail = urls.String();
+	appInfo.ImageDetail = urls.String()
 	return appInfo, nil
 }
 

@@ -329,9 +329,14 @@ func DownloadApp(c *gin.Context) {
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "resource not found"))
 		return
 	}
-	if strings.HasSuffix(path, ".apk") {
-		c.Writer.Header().Set("Content-Type", "application/vnd.android.package-archive")
+	isApk := strings.HasSuffix(path, ".apk")
+
+	if !isApk {
+		c.File(filePath)
+		return
 	}
+
+	c.Writer.Header().Set("Content-Type", "application/vnd.android.package-archive")
 	if app.Encrypted {
 		c.File(filePath)
 	} else {
@@ -363,6 +368,9 @@ func DownloadApp(c *gin.Context) {
 			panic(err)
 		}
 		keyIv, err := crypto.RsaDec(privateKey, encKeyIv)
+		if err != nil {
+			panic(err)
+		}
 		stream, err := crypto.CtrCipher(keyIv[:32], keyIv[32:])
 		if err != nil {
 			panic(err)
