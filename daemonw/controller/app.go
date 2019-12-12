@@ -383,6 +383,27 @@ func DownloadApp(c *gin.Context) {
 	}
 }
 
+func GetAppInfo(c *gin.Context) {
+	uuid := c.Query("uuid")
+	if uuid == "" {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
+		return
+	}
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeQueryApp, "illegal request"))
+		return
+	}
+	appDao := dao.NewAppDao()
+	info, err := appDao.GetAppInfoById(id)
+	util.PanicIfErr(err)
+	if info == nil {
+		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
+		return
+	}
+	c.JSON(http.StatusOK, entity.NewResp().AddResult("info", info))
+}
+
 func DeleteApp(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

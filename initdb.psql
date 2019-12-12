@@ -55,11 +55,14 @@ create TABLE updates (
 
 create TABLE app_infos (
       id bigint PRIMARY KEY,
+      name varchar(128),
       package varchar(256) NOT NULL,
       version varchar(256) NOT NULL,
       description text,
       change_log text,
       image_detail text,
       language text,
-      country text
+      country text,
+      vendor varchar(128),
+      category varchar(128)
 );

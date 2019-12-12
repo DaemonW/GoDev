@@ -23,6 +23,7 @@ type Update struct {
 
 type AppInfo struct {
 	Id          uint64 `db:"id"`
+	Name        string `db:"name"`
 	Package     string `db:"package"`
 	Version     string `db:"version"`
 	Description string `db:"description"`
@@ -30,4 +31,7 @@ type AppInfo struct {
 	ImageDetail string `db:"image_detail"`
 	Language    string `db:"language"`
 	Country     string `db:"country"`
+	Vendor      string `db:"vendor"`
+	Category    string `db:"category"`
+	Icon        string
 }

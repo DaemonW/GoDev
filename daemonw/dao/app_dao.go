@@ -22,8 +22,8 @@ func (dao *appDao) CreateApp(app *App) error {
 }
 
 func (dao *appDao) CreateAppInfo(app *AppInfo) error {
-	smt := `INSERT INTO app_infos(id,package,version,description,change_log,image_detail,language,country) 
-			VALUES (:id,:package,:version,:description,:change_log,:image_detail,:language,:country)
+	smt := `INSERT INTO app_infos(id,name,package,version,description,change_log,image_detail,language,country,vendor,category) 
+			VALUES (:id,:name,:package,:version,:description,:change_log,:image_detail,:language,:country,:vendor,:category)
 			RETURNING id`
 	_, err := dao.CreateObj(smt, app)
 	return err
@@ -57,6 +57,16 @@ func (dao *appDao) GetAppById(id uint64) (*App, error) {
 		return nil, nil
 	}
 	return app, err
+}
+
+func (dao *appDao) GetAppInfoById(id uint64) (*AppInfo, error) {
+	info := &AppInfo{}
+	smt := `SELECT * FROM app_infos WHERE id=?`
+	err := dao.Get(info, smt, id)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return info, err
 }
 
 func (dao *appDao) GetAllApps() ([]App, error) {
