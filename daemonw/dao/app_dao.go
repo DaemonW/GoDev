@@ -113,3 +113,10 @@ func (dao *appDao) DeleteAppById(id uint64) error {
 	_, err := dao.Delete(smt, id)
 	return err
 }
+
+
+func (dao *appDao) DeleteAppInfoById(id uint64) error {
+	smt := `DELETE FROM app_infos WHERE id=?`
+	_, err := dao.Delete(smt, id)
+	return err
+}

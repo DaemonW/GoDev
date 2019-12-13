@@ -426,6 +426,12 @@ func DeleteApp(c *gin.Context) {
 		appDao.RollBack()
 		panic(err)
 	}
+
+	err = appDao.DeleteAppInfoById(id)
+	if err != nil {
+		appDao.RollBack()
+		panic(err)
+	}
 	latest := -1
 	err = appDao.Get(&latest, `SELECT COALESCE(MAX(version_code),-1) FROM apps WHERE app_id=?`, app.AppId)
 	if err != nil {
