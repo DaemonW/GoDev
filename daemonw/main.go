@@ -66,9 +66,9 @@ func listenShutdownSignal(srv *http.Server) {
 	}
 }
 
-func main1() {
-	spider := &controller.MiStoreSpider{}
-	apkInfo,err := spider.FetchApkInfo("com.tencent.mobileqq")
+func main0() {
+	spider := &controller.GoogleStoreSpider{}
+	apkInfo,err := spider.FetchApkInfo("com.wire")
 	if err != nil {
 		fmt.Println(err)
 		return
