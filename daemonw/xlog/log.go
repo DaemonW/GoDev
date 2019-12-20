@@ -17,7 +17,7 @@ func InitLog() {
 	zerolog.TimeFieldFormat = ""
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	var writer io.Writer
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
 	logFile := conf.Config.LogDir + string(filepath.Separator) + defaultFileName
 	if (conf.FileLog) {
 		fileWriter := NewFileWriter(logFile, defaultLogMaxSize)

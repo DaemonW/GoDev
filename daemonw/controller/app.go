@@ -80,8 +80,9 @@ func CreateApp(c *gin.Context) {
 	filePath := dir + "/" + app.Name + ".apk"
 	//err = os.Rename(tempFile, filePath)
 	err = encryptApp(tempFile, filePath)
+	os.Remove(tempFile)
 	if err != nil {
-		os.Remove(tempFile)
+		os.Remove(filePath)
 		panic(err)
 	}
 	if icon != nil {

@@ -4,12 +4,14 @@ import (
 	"daemonw/conf"
 	"daemonw/dao"
 	"daemonw/entity"
+	"daemonw/util"
 	"daemonw/xlog"
 	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -36,6 +38,7 @@ func init() {
 						xlog.Error().Msgf("err: %s", err.Error())
 					}
 					saveIcon(app, info.Icon)
+					saveImageDetails(app, info.ImageDetail)
 					break
 				}
 			}
@@ -86,11 +89,11 @@ func (spider *MiStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo, err
 		selection.Find("div.intro-titles").Each(func(i int, selection *goquery.Selection) {
 			children := selection.Children()
 			children.Each(func(i int, selection *goquery.Selection) {
-				if (i == 0) {
+				if i == 0 {
 					appInfo.Vendor = selection.Text()
-				} else if (i == 1) {
+				} else if i == 1 {
 					appInfo.Name = selection.Text()
-				} else if (i == 2) {
+				} else if i == 2 {
 					text := selection.Text()
 					s := strings.Split(text, "|")
 					s = strings.Split(s[0], "：")
@@ -139,17 +142,48 @@ func saveIcon(app entity.App, iconUrl string) {
 		return
 	}
 	resp, err := http.Get(iconUrl)
-	if err != nil {
+	if err != nil || resp.StatusCode != http.StatusOK {
 		xlog.Error().Msgf(`err: save icon failed for "%s“`, app.Name)
 		return
 	}
-	if resp.StatusCode == http.StatusOK {
-		defer resp.Body.Close()
-		f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
-		if err == nil {
-			defer f.Close()
-			io.Copy(f, resp.Body)
-		}
+	defer resp.Body.Close()
+	f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err == nil {
+		defer f.Close()
+		io.Copy(f, resp.Body)
+	}
+}
+
+func saveImageDetails(app entity.App, details string) {
+	if details == "" {
+		return
+	}
+	urls := strings.Split(details, `,`)
+	imgNum := len(urls)
+	detailsDir := filepath.Join(conf.Config.Data, app.AppId, app.Version, "details")
+	if !util.ExistFile(detailsDir) {
+		os.Mkdir(detailsDir, os.ModePerm)
+	}
+	for i := 0; i < imgNum; i++ {
+		saveImageDetail(detailsDir, urls[i], i)
+	}
+}
+
+func saveImageDetail(folder string, url string, index int) {
+	if url == "" {
+		return
+	}
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		xlog.Error().Msgf(`err: save detail failed for "%s“`, url)
+		return
+	}
+	imgFile := folder + "/" + strconv.Itoa(index) + ".jpg"
+	defer resp.Body.Close()
+	f, err := os.OpenFile(imgFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err == nil {
+		defer f.Close()
+		io.Copy(f, resp.Body)
 	}
 }
 
@@ -172,9 +206,9 @@ func (spider *GoogleStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo,
 	})
 
 	doc.Find("div.DWPxHb[jsname='bN97Pc']").Each(func(i int, selection *goquery.Selection) {
-		if (i == 0) {
+		if i == 0 {
 			//skip
-		} else if (i == 1) {
+		} else if i == 1 {
 			selection.Find("span[jsslot]").Each(func(i int, selection *goquery.Selection) {
 				appInfo.ChangeLog = selection.Text()
 			})
@@ -183,9 +217,9 @@ func (spider *GoogleStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo,
 
 	doc.Find("a.hrTbp.R8zArc").Each(func(i int, selection *goquery.Selection) {
 		text := selection.Text()
-		if (i == 0) {
+		if i == 0 {
 			appInfo.Vendor = text
-		} else if (i == 1) {
+		} else if i == 1 {
 			appInfo.Category = text
 		}
 	})
@@ -194,12 +228,12 @@ func (spider *GoogleStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo,
 		child := selection.Children()
 		src, exist := child.Attr("srcset")
 		if exist && isHttpLink(src) {
-			appInfo.Icon = src
+			appInfo.Icon = strings.Fields(src)[0]
 			return
 		}
 		src, exist = child.Attr("src")
 		if exist && isHttpLink(src) {
-			appInfo.Icon = src
+			appInfo.Icon = strings.Fields(src)[0]
 			return
 		}
 	})
@@ -209,22 +243,22 @@ func (spider *GoogleStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo,
 		selection.Find("img").Each(func(i int, selection *goquery.Selection) {
 			src, exist := selection.Attr("srcset")
 			if exist && isHttpLink(src) {
-				urls = append(urls, src)
+				urls = append(urls, strings.Fields(src)[0])
 				return
 			}
 			src, exist = selection.Attr("data-srcset")
 			if exist && isHttpLink(src) {
-				urls = append(urls, src)
+				urls = append(urls, strings.Fields(src)[0])
 				return
 			}
 			src, exist = selection.Attr("src")
 			if exist && isHttpLink(src) {
-				urls = append(urls, src)
+				urls = append(urls, strings.Fields(src)[0])
 				return
 			}
 			src, exist = selection.Attr("data-src")
 			if exist && isHttpLink(src) {
-				urls = append(urls, src)
+				urls = append(urls, strings.Fields(src)[0])
 				return
 			}
 		})

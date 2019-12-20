@@ -1,6 +1,7 @@
 package router
 
 import (
+	"daemonw/conf"
 	"daemonw/controller"
 	"daemonw/dao"
 	"daemonw/entity"
@@ -56,7 +57,7 @@ func initUserRouter(r *gin.Engine) {
 
 	appRouter := r.Group("")
 	appRouter.GET("/api/apps", controller.QueryApps)
-	appRouter.GET("/api/download/app/:id/resources/:path", controller.DownloadApp)
+	appRouter.GET("/api/download/app/:id", controller.DownloadApp)
 	appRouter.GET("/api/app/detail/:id", controller.GetAppInfo)
-	appRouter.Static("/static", "/home/daemonw/SrcRepo/AppStore/build/web")
+	appRouter.Static("/api/app/resources/:path", conf.Config.Data+"/res")
 }
