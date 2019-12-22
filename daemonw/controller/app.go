@@ -56,7 +56,9 @@ func CreateApp(c *gin.Context) {
 	}
 	defer r.Close()
 	stamp := time.Now().UnixNano()
-	tempFile := filepath.Join(conf.Config.Data, strconv.FormatInt(stamp, 10))
+	resFolder := filepath.Join(conf.Config.Data, "res")
+	apkFolder := filepath.Join(conf.Config.Data, "apk")
+	tempFile := filepath.Join(apkFolder, strconv.FormatInt(stamp, 10))
 	f, err := os.OpenFile(tempFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
 	defer f.Close()
 	_, err = io.Copy(f, r)
@@ -72,12 +74,12 @@ func CreateApp(c *gin.Context) {
 		app.Name = name
 	}
 	app.Encrypted = enc
-	dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
-	if !util.ExistFile(dir) {
-		err = os.MkdirAll(dir, os.ModePerm)
+	apkDir := filepath.Join(apkFolder, app.AppId, app.Version)
+	if !util.ExistFile(apkDir) {
+		err = os.MkdirAll(apkDir, os.ModePerm)
 		util.PanicIfErr(err)
 	}
-	filePath := dir + "/" + app.Name + ".apk"
+	filePath := apkDir + "/" + app.Name + ".apk"
 	//err = os.Rename(tempFile, filePath)
 	err = encryptApp(tempFile, filePath)
 	os.Remove(tempFile)
@@ -85,8 +87,13 @@ func CreateApp(c *gin.Context) {
 		os.Remove(filePath)
 		panic(err)
 	}
+	iconDir := filepath.Join(resFolder, app.AppId, app.Version)
+	if !util.ExistFile(iconDir) {
+		err = os.MkdirAll(iconDir, os.ModePerm)
+		util.PanicIfErr(err)
+	}
 	if icon != nil {
-		iconFile := dir + "/icon.png"
+		iconFile := iconDir + "/icon.png"
 		f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err == nil {
 			defer f.Close()
@@ -100,7 +107,7 @@ func CreateApp(c *gin.Context) {
 				return
 			}
 		} else {
-			iconFile := dir + "/icon.png"
+			iconFile := iconDir + "/icon.png"
 			f, err := os.OpenFile(iconFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
 			if err == nil {
 				defer f.Close()
@@ -279,19 +286,19 @@ func fillAppUrl(uuid string, apps []entity.App) {
 		}
 	}
 	c := conf.Config
-	protol := "https"
+	protocol := "https"
 	if !c.TLS {
-		protol = "http"
+		protocol = "http"
 	}
 	for i := 0; i < len(apps); i++ {
-		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/download/app/%d/resources/%s.apk?uuid=%s&c=%s`,
-			protol, c.Domain, c.Port, apps[i].Id, apps[i].Name, uuid, verifyCode)
-		dir := filepath.Join(conf.Config.Data, apps[i].AppId, apps[i].Version)
+		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/download/app/%d?uuid=%s&c=%s`,
+			protocol, c.Domain, c.Port, apps[i].Id, uuid, verifyCode)
+		dir := filepath.Join(conf.Config.Data, "res", apps[i].AppId, apps[i].Version)
 		if !util.ExistFile(dir + `/icon.png`) {
 			apps[i].Icon = ""
 		} else {
-			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/download/app/%d/resources/icon.png?uuid=%s&c=%s`,
-				protol, c.Domain, c.Port, apps[i].Id, uuid, verifyCode)
+			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/app/resources/%s/%s/icon.png?uuid=%s&c=%s`,
+				protocol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
 		}
 	}
 }
@@ -324,19 +331,11 @@ func DownloadApp(c *gin.Context) {
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
 		return
 	}
-	path := c.Param("path")
-	filePath := filepath.Join(conf.Config.Data, app.AppId, app.Version, path)
+	filePath := filepath.Join(conf.Config.Data, "apk", app.AppId, app.Version, app.Name+".apk")
 	if !util.ExistFile(filePath) {
-		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "resource not found"))
+		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "apk not found"))
 		return
 	}
-	isApk := strings.HasSuffix(path, ".apk")
-
-	if !isApk {
-		c.File(filePath)
-		return
-	}
-
 	c.Writer.Header().Set("Content-Type", "application/vnd.android.package-archive")
 	if app.Encrypted {
 		c.File(filePath)
@@ -402,6 +401,33 @@ func GetAppInfo(c *gin.Context) {
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
 		return
 	}
+	detailDir := filepath.Join(conf.Config.Data, "res", info.Package, info.Version, "details")
+	fis := util.ListFilesInfo(detailDir)
+	if fis != nil {
+		verifyCode := dao.Redis().Get("app:" + uuid).Val()
+		if verifyCode == "" {
+			verifyCode = util.RandomCharacters(32)
+			success, err := dao.Redis().SetNX("app:"+uuid, verifyCode, time.Minute*30).Result()
+			util.PanicIfErr(err)
+			if !success {
+				xlog.Error().Msg("generate app resources verify code failed")
+				return
+			}
+		}
+		c := conf.Config
+		protocol := "https"
+		if !c.TLS {
+			protocol = "http"
+		}
+		n := len(fis)
+		details := make([]string, n)
+		for i := 0; i < n; i++ {
+			img := fis[i].Name()
+			details[i] = fmt.Sprintf(`%s://%s:%d/api/app/resources/%s/%s/details/%s?uuid=%s&c=%s`,
+				protocol, c.Domain, c.Port, info.Package, info.Version, img, uuid, verifyCode)
+		}
+		info.ImageDetail = strings.Join(details, ",")
+	}
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("info", info))
 }
 
@@ -452,13 +478,20 @@ func DeleteApp(c *gin.Context) {
 			panic(err)
 		}
 	}
-	dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
-	//err = os.Remove(dir + "/" + app.Name + ".apk")
-	err = os.RemoveAll(dir)
+	apkFolder := filepath.Join(conf.Config.Data, "apk", app.AppId, app.Version)
+	err = os.RemoveAll(apkFolder)
 	if err != nil {
 		appDao.RollBack()
 		panic(err)
 	}
+
+	resFolder := filepath.Join(conf.Config.Data, "res", app.AppId, app.Version)
+	err = os.RemoveAll(resFolder)
+	if err != nil {
+		appDao.RollBack()
+		panic(err)
+	}
+
 	err = appDao.Commit()
 	if err != nil {
 		appDao.RollBack()
@@ -512,7 +545,7 @@ func UpdateApp(c *gin.Context) {
 			return
 		}
 		defer r.Close()
-		dir := filepath.Join(conf.Config.Data, app.AppId, app.Version)
+		dir := filepath.Join(conf.Config.Data, "res", app.AppId, app.Version)
 		iconFile := dir + "/icon.png"
 		f, err := os.OpenFile(iconFile, os.O_RDWR|os.O_CREATE, os.ModePerm)
 		if err != nil {

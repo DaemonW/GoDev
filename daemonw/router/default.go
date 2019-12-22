@@ -59,5 +59,5 @@ func initUserRouter(r *gin.Engine) {
 	appRouter.GET("/api/apps", controller.QueryApps)
 	appRouter.GET("/api/download/app/:id", controller.DownloadApp)
 	appRouter.GET("/api/app/detail/:id", controller.GetAppInfo)
-	appRouter.Static("/api/app/resources/:path", conf.Config.Data+"/res")
+	appRouter.Static("/api/app/resources", conf.Config.Data+"/res")
 }

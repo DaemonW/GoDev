@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	spiders := []PkgSpider{&MiStoreSpider{}, &GoogleStoreSpider{}}
+	spiders := []PkgSpider{&GoogleStoreSpider{},&MiStoreSpider{}}
 	go func() {
 		for {
 			app := <-AppInfoSpiderChan
@@ -31,6 +31,7 @@ func init() {
 				}
 				if info != nil && info.Description != "" {
 					info.Id = app.Id
+					info.Package = app.AppId
 					info.Version = app.Version
 					db := dao.NewAppDao()
 					err := db.CreateAppInfo(info)
@@ -134,7 +135,7 @@ func (spider *MiStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo, err
 }
 
 func saveIcon(app entity.App, iconUrl string) {
-	iconFile := filepath.Join(conf.Config.Data, app.AppId, app.Version, "icon.png")
+	iconFile := filepath.Join(conf.Config.Data, "res", app.AppId, app.Version, "icon.png")
 	//if util.ExistFile(iconFile) {
 	//	return
 	//}
@@ -160,7 +161,7 @@ func saveImageDetails(app entity.App, details string) {
 	}
 	urls := strings.Split(details, `,`)
 	imgNum := len(urls)
-	detailsDir := filepath.Join(conf.Config.Data, app.AppId, app.Version, "details")
+	detailsDir := filepath.Join(conf.Config.Data, "res", app.AppId, app.Version, "details")
 	if !util.ExistFile(detailsDir) {
 		os.Mkdir(detailsDir, os.ModePerm)
 	}

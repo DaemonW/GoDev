@@ -74,6 +74,10 @@ func InitConfig() {
 	util.PanicIfErr(err)
 	err = os.MkdirAll(Config.Data, 0777)
 	util.PanicIfErr(err)
+	err = os.MkdirAll(Config.Data+"/res", 0777)
+	util.PanicIfErr(err)
+	err = os.MkdirAll(Config.Data+"/apk", 0777)
+	util.PanicIfErr(err)
 	syscall.Umask(mask)
 }
 
