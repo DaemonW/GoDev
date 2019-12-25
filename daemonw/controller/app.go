@@ -344,6 +344,8 @@ func DownloadApp(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
+		fi, _ := fr.Stat()
+		c.Writer.Header().Set("Content-Length", strconv.FormatInt(fi.Size()-256, 10))
 		defer fr.Close()
 		lr := &io.LimitedReader{fr, 256}
 		encKeyIv, err := ioutil.ReadAll(lr)

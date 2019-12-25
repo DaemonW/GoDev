@@ -21,6 +21,9 @@ rsaPublic = "/home/daemonw/PKinfluence"
 ### RSA private key
 rsaPrivate = "/home/daemonw/SKinfluence"
 
+### static resource
+static = "/home/daemonw/SrcRepo/AppStore/build/web"
+
 ### listen port of the service
 port = 8080
 

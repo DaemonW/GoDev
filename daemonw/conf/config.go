@@ -4,6 +4,7 @@ package conf
 import (
 	"daemonw/util"
 	"github.com/spf13/viper"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +22,7 @@ type config struct {
 	Port       int //port
 	LogDir     string
 	Data       string //dir to store the data
+	Static     string
 	Database   database
 	Redis      redis
 	SMTPServer smtpServer
@@ -79,6 +81,9 @@ func InitConfig() {
 	err = os.MkdirAll(Config.Data+"/apk", 0777)
 	util.PanicIfErr(err)
 	syscall.Umask(mask)
+	if !util.ExistFile(Config.Static){
+		log.Fatal("static file is not exist")
+	}
 }
 
 func setDefault() {

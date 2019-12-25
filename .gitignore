@@ -9,6 +9,7 @@
 *debug
 /certs
 /log
+/out
 /data
 /cache
 /autocerts

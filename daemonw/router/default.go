@@ -7,6 +7,7 @@ import (
 	"daemonw/entity"
 	"daemonw/middleware"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 var router *gin.Engine
@@ -60,4 +61,8 @@ func initUserRouter(r *gin.Engine) {
 	appRouter.GET("/api/download/app/:id", controller.DownloadApp)
 	appRouter.GET("/api/app/detail/:id", controller.GetAppInfo)
 	appRouter.Static("/api/app/resources", conf.Config.Data+"/res")
+	appRouter.Static("/static", conf.Config.Static)
+	appRouter.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/static/index.html")
+	})
 }
