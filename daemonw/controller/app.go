@@ -70,7 +70,7 @@ func CreateApp(c *gin.Context) {
 		os.Remove(tempFile)
 		return
 	}
-	if app.Name == "" {
+	if name != "" {
 		app.Name = name
 	}
 	app.Encrypted = enc
@@ -127,7 +127,11 @@ func CreateApp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, entity.NewRespErr(xerr.CodeCrateApp, "apk already exist"))
 		return
 	}
-	AppInfoSpiderChan <- *app
+	AppInfoTaskLock.Lock()
+	if _, ok := AppInfoSpiderTask[app.Id]; !ok {
+		AppInfoSpiderChan <- *app
+	}
+	defer AppInfoTaskLock.Unlock()
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("app", app))
 }
 
@@ -429,6 +433,16 @@ func GetAppInfo(c *gin.Context) {
 				protocol, c.Domain, c.Port, info.Package, info.Version, img, uuid, verifyCode)
 		}
 		info.ImageDetail = strings.Join(details, ",")
+	} else {
+		app, err := appDao.GetAppById(id)
+		util.PanicIfErr(err)
+		if app != nil {
+			AppInfoTaskLock.Lock()
+			if _, ok := AppInfoSpiderTask[info.Id]; !ok {
+				AppInfoSpiderChan <- *app
+			}
+			defer AppInfoTaskLock.Unlock()
+		}
 	}
 	c.JSON(http.StatusOK, entity.NewResp().AddResult("info", info))
 }

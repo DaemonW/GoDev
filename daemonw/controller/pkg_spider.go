@@ -13,14 +13,17 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var (
 	AppInfoSpiderChan = make(chan entity.App, 10)
+	AppInfoSpiderTask = make(map[uint64]bool)
+	AppInfoTaskLock   = sync.RWMutex{}
 )
 
 func init() {
-	spiders := []PkgSpider{&GoogleStoreSpider{},&MiStoreSpider{}}
+	spiders := []PkgSpider{&GoogleStoreSpider{}, &MiStoreSpider{}}
 	go func() {
 		for {
 			app := <-AppInfoSpiderChan
@@ -43,6 +46,9 @@ func init() {
 					break
 				}
 			}
+			AppInfoTaskLock.Lock()
+			delete(AppInfoSpiderTask, app.Id)
+			AppInfoTaskLock.Unlock()
 		}
 	}()
 }
