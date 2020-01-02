@@ -52,6 +52,7 @@ func initUserRouter(r *gin.Engine) {
 	fileRouter.POST("/api/user/:id/files", controller.CreateFile)
 
 	appAdminRouter := r.Group("")
+	appAdminRouter.Use(middleware.JwtAuth())
 	appAdminRouter.POST("/api/admin/apps", controller.CreateApp)
 	appAdminRouter.DELETE("/api/admin/app/:id", controller.DeleteApp)
 	appAdminRouter.PUT("api/admin/app/:id", controller.UpdateApp)
