@@ -16,6 +16,8 @@ type config struct {
 	TLSCert    string //server certificate
 	TLSKey     string //server private key
 	TLS        bool
+	TwoWayAuth bool
+	ClientCA   string
 	RSAPublic  string
 	RSAPrivate string
 	Port       int //port
@@ -80,7 +82,7 @@ func InitConfig() {
 	err = os.MkdirAll(Config.Data+"/apk", 0777)
 	util.PanicIfErr(err)
 	syscall.Umask(mask)
-	if !util.ExistFile(Config.Static){
+	if !util.ExistFile(Config.Static) {
 		log.Fatal("static file is not exist")
 	}
 }
@@ -88,6 +90,7 @@ func InitConfig() {
 func setDefault() {
 	viper.SetDefault("tls", false)
 	viper.SetDefault("port", 8080)
+	viper.SetDefault("twoWayAuth", false)
 	viper.SetDefault("logDir", "/tmp/log")
 	viper.SetDefault("data", "/tmp/data")
 

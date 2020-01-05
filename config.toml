@@ -12,8 +12,11 @@ tlsCert = ""
 ### ssl private key
 tlsKey = ""
 
-### domain name of the service endpoint
-domain = "192.168.21.41"
+### enable two-way-ahth tls
+twoWayAuth = false
+
+### client ca for two-way-auth tls
+clientCa = ""
 
 ### RSA public key
 rsaPublic = "/home/daemonw/PKinfluence"

@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"daemonw/conf"
 	"daemonw/controller"
 	"daemonw/dao"
 	"daemonw/router"
 	"daemonw/xlog"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,12 +26,27 @@ func main() {
 	defer dao.CloseDao()
 
 	cfg := conf.Config
-	router := router.GetRouter()
+	r := router.GetRouter()
 	var tlsConf *tls.Config
 	//tls config
+	if cfg.TwoWayAuth {
+		pool := x509.NewCertPool()
+		caCertPath := cfg.ClientCA
+
+		caCrt, err := ioutil.ReadFile(caCertPath)
+		if err != nil {
+			xlog.Fatal().Err(err).Msg("parse client ca failed")
+			return
+		}
+		pool.AppendCertsFromPEM(caCrt)
+		tlsConf = &tls.Config{
+			ClientCAs:  pool,
+			ClientAuth: tls.RequireAndVerifyClientCert,
+		}
+	}
 	srv := &http.Server{
 		Addr:      ":" + strconv.Itoa(cfg.Port),
-		Handler:   router,
+		Handler:   r,
 		TLSConfig: tlsConf,
 	}
 	go func() {
@@ -68,7 +85,7 @@ func listenShutdownSignal(srv *http.Server) {
 
 func main0() {
 	spider := &controller.GoogleStoreSpider{}
-	apkInfo,err := spider.FetchApkInfo("com.wire")
+	apkInfo, err := spider.FetchApkInfo("com.wire")
 	if err != nil {
 		fmt.Println(err)
 		return
