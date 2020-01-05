@@ -246,6 +246,7 @@ func QueryApps(c *gin.Context) {
 	latest, _ := strconv.ParseBool(c.Query("latest"))
 	app_id := c.Query("app_id")
 	appDao := dao.NewAppDao()
+	host := c.Request.Host
 	//查询所有app
 	if !latest {
 		var apps []entity.App
@@ -256,26 +257,26 @@ func QueryApps(c *gin.Context) {
 			apps, err = appDao.GetAllApps()
 		}
 		util.PanicIfErr(err)
-		fillAppUrl(uuid, apps)
+		fillAppUrl(host, uuid, apps)
 		c.JSON(http.StatusOK, entity.NewResp().AddResult("apps", apps))
 		return
 	} else {
 		if app_id != "" {
 			app, err := appDao.GetLatestApp(app_id)
 			util.PanicIfErr(err)
-			fillAppUrl(uuid, app)
+			fillAppUrl(host, uuid, app)
 			c.JSON(http.StatusOK, entity.NewResp().AddResult("apps", app))
 		} else {
 			apps, err := appDao.GetLatestApps()
 			util.PanicIfErr(err)
-			fillAppUrl(uuid, apps)
+			fillAppUrl(host, uuid, apps)
 			c.JSON(http.StatusOK, entity.NewResp().AddResult("apps", apps))
 		}
 		return
 	}
 }
 
-func fillAppUrl(uuid string, apps []entity.App) {
+func fillAppUrl(host, uuid string, apps []entity.App) {
 	if apps == nil {
 		return
 	}
@@ -295,14 +296,14 @@ func fillAppUrl(uuid string, apps []entity.App) {
 		protocol = "http"
 	}
 	for i := 0; i < len(apps); i++ {
-		apps[i].Url = fmt.Sprintf(`%s://%s:%d/api/download/app/%d?uuid=%s&c=%s`,
-			protocol, c.Domain, c.Port, apps[i].Id, uuid, verifyCode)
+		apps[i].Url = fmt.Sprintf(`%s://%s/api/download/app/%d?uuid=%s&c=%s`,
+			protocol, host, apps[i].Id, uuid, verifyCode)
 		dir := filepath.Join(conf.Config.Data, "res", apps[i].AppId, apps[i].Version)
 		if !util.ExistFile(dir + `/icon.png`) {
 			apps[i].Icon = ""
 		} else {
-			apps[i].Icon = fmt.Sprintf(`%s://%s:%d/api/app/resources/%s/%s/icon.png?uuid=%s&c=%s`,
-				protocol, c.Domain, c.Port, apps[i].AppId, apps[i].Version, uuid, verifyCode)
+			apps[i].Icon = fmt.Sprintf(`%s://%s/api/app/resources/%s/%s/icon.png?uuid=%s&c=%s`,
+				protocol, host, apps[i].AppId, apps[i].Version, uuid, verifyCode)
 		}
 	}
 }
@@ -404,10 +405,20 @@ func GetAppInfo(c *gin.Context) {
 	info, err := appDao.GetAppInfoById(id)
 	util.PanicIfErr(err)
 	if info == nil {
+		app, err := appDao.GetAppById(id)
+		util.PanicIfErr(err)
+		if app != nil {
+			AppInfoTaskLock.Lock()
+			if _, ok := AppInfoSpiderTask[id]; !ok {
+				AppInfoSpiderChan <- *app
+			}
+			defer AppInfoTaskLock.Unlock()
+		}
 		c.JSON(http.StatusNotFound, entity.NewRespErr(xerr.CodeDownloadApp, "app not found"))
 		return
 	}
 	detailDir := filepath.Join(conf.Config.Data, "res", info.Package, info.Version, "details")
+	host := c.Request.Host
 	fis := util.ListFilesInfo(detailDir)
 	if fis != nil {
 		verifyCode := dao.Redis().Get("app:" + uuid).Val()
@@ -429,8 +440,8 @@ func GetAppInfo(c *gin.Context) {
 		details := make([]string, n)
 		for i := 0; i < n; i++ {
 			img := fis[i].Name()
-			details[i] = fmt.Sprintf(`%s://%s:%d/api/app/resources/%s/%s/details/%s?uuid=%s&c=%s`,
-				protocol, c.Domain, c.Port, info.Package, info.Version, img, uuid, verifyCode)
+			details[i] = fmt.Sprintf(`%s://%s/api/app/resources/%s/%s/details/%s?uuid=%s&c=%s`,
+				protocol, host, info.Package, info.Version, img, uuid, verifyCode)
 		}
 		info.ImageDetail = strings.Join(details, ",")
 	} else {

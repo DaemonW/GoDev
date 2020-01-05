@@ -97,7 +97,7 @@ func CreateUser(c *gin.Context) {
 		xlog.Panic().Msg(util.StackInfo())
 		c.JSON(http.StatusBadRequest, NewRespErr(xerr.CodeCreateUser, xerr.MsgCreateUserFail))
 	} else {
-		go sendMail(user)
+		go sendMail(user, c.Request.Host)
 		resp := NewResp().AddResult("msg", "create user success")
 		c.JSON(http.StatusOK, resp)
 	}
@@ -194,7 +194,7 @@ func DeleteUser(c *gin.Context) {
 	}
 }
 
-func sendMail(user *User) {
+func sendMail(user *User, host string) {
 	serverConf := conf.Config.SMTPServer
 	d := gomail.NewDialer(serverConf.Host, serverConf.Port, serverConf.Account, serverConf.Password)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
@@ -203,7 +203,7 @@ func sendMail(user *User) {
 	m.SetHeader("To", user.Username)
 	//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 	m.SetHeader("Subject", "Hello!")
-	m.SetBody("text/html", genActiveUrl(user))
+	m.SetBody("text/html", genActiveUrl(host, user))
 	//m.Attach("/home/daemonw/test.jpg")
 	err := d.DialAndSend(m)
 	if err != nil {
@@ -211,12 +211,12 @@ func sendMail(user *User) {
 	}
 }
 
-func genActiveUrl(user *User) string {
+func genActiveUrl(host string, user *User) string {
 	key := fmt.Sprintf("verify_code:active:%d", user.Id)
 	code := util.RandomNum(16)
 	err := dao.Redis().SetXX(key, code, time.Minute*10).Err()
 	if err != nil {
 		xlog.Panic().Msg(util.StackInfo())
 	}
-	return fmt.Sprintf("http://%s:%d/api/user/%d?verify_code=%s", conf.Config.Domain, conf.Config.Port, user.Id, code)
+	return fmt.Sprintf("http://%s/api/user/%d?verify_code=%s", host, user.Id, code)
 }

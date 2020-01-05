@@ -16,7 +16,6 @@ type config struct {
 	TLSCert    string //server certificate
 	TLSKey     string //server private key
 	TLS        bool
-	Domain     string
 	RSAPublic  string
 	RSAPrivate string
 	Port       int //port
@@ -88,7 +87,6 @@ func InitConfig() {
 
 func setDefault() {
 	viper.SetDefault("tls", false)
-	viper.SetDefault("domain", "localhost")
 	viper.SetDefault("port", 8080)
 	viper.SetDefault("logDir", "/tmp/log")
 	viper.SetDefault("data", "/tmp/data")
