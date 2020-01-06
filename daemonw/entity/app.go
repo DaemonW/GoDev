@@ -12,6 +12,7 @@ type App struct {
 	Size        int64     `db:"size"`
 	Hash        string    `db:"hash"`
 	Encrypted   bool      `db:"encrypted"`
+	Category    string    `db:"category"`
 	Url         string    `db:"url"`
 	CreateAt    time.Time `db:"create_at"`
 }
@@ -32,6 +33,5 @@ type AppInfo struct {
 	Language    string `db:"language"`
 	Country     string `db:"country"`
 	Vendor      string `db:"vendor"`
-	Category    string `db:"category"`
 	Icon        string
 }

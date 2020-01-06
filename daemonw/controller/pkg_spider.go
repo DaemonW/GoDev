@@ -105,7 +105,7 @@ func (spider *MiStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo, err
 					s := strings.Split(text, "|")
 					s = strings.Split(s[0], "：")
 					if len(s) >= 2 {
-						appInfo.Category = s[1]
+						//appInfo.Category = s[1]
 					}
 				}
 			})
@@ -227,7 +227,7 @@ func (spider *GoogleStoreSpider) FetchApkInfo(pkg string) (info *entity.AppInfo,
 		if i == 0 {
 			appInfo.Vendor = text
 		} else if i == 1 {
-			appInfo.Category = text
+			//appInfo.Category = text
 		}
 	})
 

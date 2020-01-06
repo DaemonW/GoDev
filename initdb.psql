@@ -35,7 +35,7 @@ create TABLE files (
 );
 
 create TABLE apps (
-      id BIGSERIAL,
+      id BIGSERIAL PRIMARY KEY,
       app_id varchar(256) NOT NULL,
       version varchar(256) NOT NULL,
       version_code int4,
@@ -43,9 +43,10 @@ create TABLE apps (
       size integer NOT NULL,
       hash varchar(64) NOT NULL,
       encrypted boolean NOT NULL,
+      category varchar(128),
       url varchar(1024),
       create_at timestamp NOT NULL,
-      PRIMARY key(app_id, version)
+      UNIQUE(app_id, version)
 );
 
 create TABLE updates (
@@ -54,7 +55,7 @@ create TABLE updates (
 );
 
 create TABLE app_infos (
-      id bigint PRIMARY KEY,
+      id bigint PRIMARY KEY REFERENCES apps ON DELETE CASCADE,
       name varchar(128),
       package varchar(256) NOT NULL,
       version varchar(256) NOT NULL,
@@ -63,6 +64,5 @@ create TABLE app_infos (
       image_detail text,
       language text,
       country text,
-      vendor varchar(128),
-      category varchar(128)
+      vendor varchar(128)
 );

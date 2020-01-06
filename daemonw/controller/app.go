@@ -48,6 +48,7 @@ func CreateApp(c *gin.Context) {
 	}
 	encrypted := c.PostForm("encrypted")
 	name := c.PostForm("name")
+	category := c.PostForm("category")
 	enc, _ := strconv.ParseBool(encrypted)
 	r, _, err := c.Request.FormFile("apk")
 	if err != nil {
@@ -74,6 +75,7 @@ func CreateApp(c *gin.Context) {
 		app.Name = name
 	}
 	app.Encrypted = enc
+	app.Category = category
 	apkDir := filepath.Join(apkFolder, app.AppId, app.Version)
 	if !util.ExistFile(apkDir) {
 		err = os.MkdirAll(apkDir, os.ModePerm)
@@ -198,8 +200,8 @@ func insertApp(app *entity.App) (exist bool, err error) {
 	}
 
 	//insert new app and version
-	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,url,create_at)
-						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:url,:create_at) RETURNING id`
+	smt = `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,category,url,create_at)
+						VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:category,:url,:create_at) RETURNING id`
 	app.CreateAt = time.Now()
 	rows, err := daoConn.NamedQuery(smt, app)
 	if err != nil {
