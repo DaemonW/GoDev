@@ -82,7 +82,7 @@ func (dao *appDao) GetAllApps() ([]App, error) {
 func (dao *appDao) GetLatestApps() ([]App, error) {
 	apps := make([]App, 0)
 	//smt := `SELECT * FROM apps INNER JOIN updates ON apps.app_id=updates.app_id, app.version_code=updates.latest`
-	smt := `SELECT apps.id,apps.app_id,apps.version,apps.version_code,apps.name,apps.size,apps.hash,apps.encrypted,apps.category,apps.url,app.create_at
+	smt := `SELECT apps.id,apps.app_id,apps.version,apps.version_code,apps.name,apps.size,apps.hash,apps.encrypted,apps.category,apps.url,apps.create_at
 			FROM apps INNER JOIN updates ON apps.app_id=updates.app_id AND apps.version_code=updates.latest`
 	err := dao.Select(&apps, smt)
 	if err == sql.ErrNoRows {
@@ -93,7 +93,7 @@ func (dao *appDao) GetLatestApps() ([]App, error) {
 
 func (dao *appDao) GetLatestApp(appId string) ([]App, error) {
 	apps := make([]App, 0)
-	smt := `SELECT apps.id,apps.app_id,apps.version,apps.version_code,apps.name,apps.size,apps.hash,apps.encrypted,apps.category,apps.url,app.create_at
+	smt := `SELECT apps.id,apps.app_id,apps.version,apps.version_code,apps.name,apps.size,apps.hash,apps.encrypted,apps.category,apps.url,apps.create_at
 			FROM apps INNER JOIN updates ON apps.app_id=updates.app_id AND apps.version_code=updates.latest WHERE apps.app_id=?`
 	err := dao.Select(&apps, smt, appId)
 	if err == sql.ErrNoRows {
