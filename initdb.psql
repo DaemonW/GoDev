@@ -1,68 +1,80 @@
 create TABLE users (
       id BIGSERIAL PRIMARY KEY,
-      username varchar(64) UNIQUE NOT NULL,
-      password varchar(32) NOT NULL,
-      salt bytea NOT NULL,
-      status smallint NOT NULL,
-      role smallint NOT NULL,
-      create_at timestamp NOT NULL,
-      update_at timestamp NOT NULL
+      username VARCHAR(64) UNIQUE NOT NULL,
+      password VARCHAR(32) NOT NULL,
+      salt BYTEA NOT NULL,
+      status SMALLINT NOT NULL,
+      role SMALLINT NOT NULL,
+      create_at TIMESTAMP NOT NULL,
+      update_at TIMESTAMP NOT NULL
 );
 
 
 create TABLE user_infos (
-      id bigint PRIMARY KEY references users(id),
-      nickname varchar(64),
-      sex smallint,
-      age smallint,
-      email varchar(128),
-      phone varchar(64),
-      address text,
-      ip varchar(128),
-      extra text
+      id BIGINT PRIMARY KEY references users(id),
+      nickname VARCHAR(64),
+      sex SMALLINT,
+      age SMALLINT,
+      email VARCHAR(128),
+      phone VARCHAR(64),
+      address TEXT,
+      ip VARCHAR(128),
+      extra TEXT
 );
 
 create TABLE files (
       id BIGSERIAL,
-      owner bigint NOT NUll references users(id),
-      name varchar(256) NOT NULL,
-      size integer NOT NULL,
-      parent_id bigint NOT NULL,
-      type smallint NOT NULL,
-      create_at timestamp NOT NULL,
-      meta text,
+      owner BIGINT NOT NUll references users(id),
+      name VARCHAR(256) NOT NULL,
+      size INTEGER NOT NULL,
+      parent_id BIGINT NOT NULL,
+      type SMALLINT NOT NULL,
+      create_at TIMESTAMP NOT NULL,
+      meta TEXT,
       PRIMARY key(owner, name, parent_id, type)
 );
 
 create TABLE apps (
       id BIGSERIAL PRIMARY KEY,
-      app_id varchar(256) NOT NULL,
-      version varchar(256) NOT NULL,
-      version_code int4,
-      name varchar(256) NOT NULL,
-      size integer NOT NULL,
-      hash varchar(64) NOT NULL,
-      encrypted boolean NOT NULL,
-      category varchar(128),
-      url varchar(1024),
-      create_at timestamp NOT NULL,
-      UNIQUE(app_id, version)
+      app_id VARCHAR(256) NOT NULL,
+      version VARCHAR(256) NOT NULL,
+      version_code INT4 NOT NULL,
+      name VARCHAR(256) NOT NULL,
+      size INTEGER NOT NULL,
+      hash VARCHAR(64) NOT NULL,
+      encrypted BOOLEAN NOT NULL,
+      category VARCHAR(128),
+      url VARCHAR(1024),
+      create_at TIMESTAMP NOT NULL,
+      UNIQUE(app_id, version_code)
 );
 
+create TABLE groups (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(256) NOT NULL,
+    priority SMALLINT NOT NULL,
+)
+
+create TABLE app_group_constrains (
+    id BIGSERIAL PRIMARY KEY,
+    gid INTEGER,
+    aid INTEGER,
+)
+
 create TABLE updates (
-      app_id varchar(256) PRIMARY KEY,
-      latest int4 NOT NULL
+      app_id VARCHAR(256) PRIMARY KEY,
+      latest INT4 NOT NULL
 );
 
 create TABLE app_infos (
-      id bigint PRIMARY KEY REFERENCES apps ON DELETE CASCADE,
-      name varchar(128),
-      package varchar(256) NOT NULL,
-      version varchar(256) NOT NULL,
-      description text,
-      change_log text,
-      image_detail text,
-      language text,
-      country text,
-      vendor varchar(128)
+      id BIGINT PRIMARY KEY REFERENCES apps ON DELETE CASCADE,
+      name VARCHAR(128),
+      package VARCHAR(256) NOT NULL,
+      version VARCHAR(256) NOT NULL,
+      description TEXT,
+      change_log TEXT,
+      image_detail TEXT,
+      language TEXT,
+      country TEXT,
+      vendor VARCHAR(128)
 );
