@@ -28,4 +28,7 @@ const (
 	CodeDeleteApp
 	CodeUpdateApp
 	CodeDownloadApp
+
+	CodeCreateGroup
+	CodeDeleteGroup
 )

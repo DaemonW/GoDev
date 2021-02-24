@@ -51,15 +51,15 @@ create TABLE apps (
 
 create TABLE groups (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(256) NOT NULL,
-    priority SMALLINT NOT NULL,
-)
+    name VARCHAR(256) NOT NULL UNIQUE,
+    priority SMALLINT NOT NULL
+);
 
 create TABLE app_group_constrains (
     id BIGSERIAL PRIMARY KEY,
     gid INTEGER,
-    aid INTEGER,
-)
+    aid INTEGER
+);
 
 create TABLE updates (
       app_id VARCHAR(256) PRIMARY KEY,

@@ -17,7 +17,10 @@ func (dao *appDao) CreateApp(app *App) error {
 	smt := `INSERT INTO apps(app_id,version,version_code,name,size,hash,encrypted,category,url,create_at)
 			VALUES (:app_id,:version,:version_code,:name,:size,:hash,:encrypted,:category,:url,:created_at)
 			RETURNING id`
-	_, err := dao.CreateObj(smt, app)
+	row, err := dao.NamedQuery(smt, app)
+	if row!=nil && row.Next(){
+		row.Scan(&app.Id)
+	}
 	return err
 }
 

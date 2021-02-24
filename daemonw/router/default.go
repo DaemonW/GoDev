@@ -38,6 +38,9 @@ func initUserRouter(r *gin.Engine) {
 	plainRooter.POST("/api/users", controller.CreateUser)
 	plainRooter.POST("/api/tokens", controller.GenToken)
 	plainRooter.GET("/api/security/verify_codes", controller.GetVerifyCode)
+	plainRooter.POST("api/admin/group", controller.CreateGroup)
+	plainRooter.DELETE("api/admin/group/:id", controller.DeleteGroup)
+	plainRooter.GET("api/admin/groups", controller.GetGroups)
 
 	authRouter := r.Group("")
 	authRouter.Use(middleware.JwtAuth())

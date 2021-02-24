@@ -7,10 +7,10 @@ enc = "utf8"
 tls = false
 
 ### ssl public certificate
-tlsCert = ""
+tlsCert = "/home/daemonw/ssl/server.crt"
 
 ### ssl private key
-tlsKey = ""
+tlsKey = "/home/daemonw/ssl/server.key"
 
 ### enable two-way-ahth tls
 twoWayAuth = false
@@ -31,10 +31,10 @@ static = "/home/daemonw/SrcRepo/AppStore/build/web"
 port = 8080
 
 ### dir to storage files
-data = "/home/daemonw/data"
+data = "/home/daemonw/test/app_store/data"
 
 ### dir to storage log files
-logDir = "/home/daemonw/log"
+logDir = "/home/daemonw/test/app_store/log"
 
 ### database config
 [database]
@@ -50,7 +50,7 @@ user = "postgres"
 
 ### database name
 
-name = "go_dev"
+name = "app_store"
 
 ### the password to connect database
 

@@ -1,5 +1,7 @@
 module daemonw
 
+go 1.15
+
 require (
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
@@ -8,7 +10,6 @@ require (
 	github.com/go-redis/redis v0.0.0-20190503082931-75795aa4236d
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.0.0
-	github.com/pelletier/go-toml v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/rs/zerolog v1.14.3
 	github.com/shogo82148/androidbinary v1.0.1
